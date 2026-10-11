@@ -1,0 +1,3 @@
+# Harness settings. Change a value to tune the harness for this project.
+
+max_parallel_tasks: 4   # most tasks a plan may schedule in one wave

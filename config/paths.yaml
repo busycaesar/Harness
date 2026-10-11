@@ -1,0 +1,4 @@
+# Harness paths: where harness skills read and write their files.
+# Paths are relative to the project root. Change a value to relocate that artifact for this project.
+
+work-items: .claude/work-items/   # one folder per work item (feature, fix, ticket, request): <work-items>/<slug>/ holds its documents
