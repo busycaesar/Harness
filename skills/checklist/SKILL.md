@@ -1,6 +1,6 @@
 ---
 name: checklist
-description: Turn technical requirements into a verification checklist — one item per requirement or acceptance criterion, each with an objective proof of how to confirm it is met. Built from the requirements alone, before any implementation exists.
+description: Turn technical requirements into a verification checklist — one item per requirement or acceptance criterion, each with an objective proof of how to confirm it is met. Built from the requirements alone, before any code is written.
 argument-hint: <requirements text or path to a requirements file>
 user-invocable: false
 context: fork

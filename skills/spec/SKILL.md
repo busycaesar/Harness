@@ -6,7 +6,7 @@ argument-hint: <requirements text or path to a requirements file>
 
 # Spec: Requirements → Unambiguous Specification
 
-Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave) into a specification file that a planner can work from without guessing. The spec says **what** must be built, never **how**: no tasks, no file-by-file changes, no code.
+Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave) into a specification file that leaves nothing to guess. The spec says **what** must be built, never **how**: no tasks, no file-by-file changes, no code.
 
 ## The one rule: never assume
 
@@ -42,7 +42,7 @@ Write only what is traceable. Wherever you cannot complete a requirement or a cr
 
 ## Step 4: Hunt for ambiguity
 
-Go through every requirement against this checklist. Each gap becomes an entry under "Open questions" (`Q#`, with the requirements it affects). This section is a working list while the spec is a draft; it must be empty before the spec can be final.
+Go through every requirement against this list. Each gap becomes an entry under "Open questions" (`Q#`, with the requirements it affects). This section is a working list while the spec is a draft; it must be empty before the spec can be final.
 
 - **Actors and permissions**: who can do this? Who must not?
 - **Inputs**: formats, validation rules, required vs optional, limits.
@@ -86,4 +86,4 @@ If the requirements change after the spec is final, set it back to `Status: draf
 
 ## Output
 
-Report the spec file path and its status. Nothing else is produced: no plan, no code.
+Report the spec file path and its status. Only the spec file is produced; no code.

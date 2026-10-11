@@ -6,7 +6,7 @@ argument-hint: <requirements text or path to a requirements file>
 
 # Plan: Requirements → Implementation Plan
 
-Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave) into a plan that an implementer can execute without making decisions of its own. The plan says **how**: which files change, in what order, and which work can run in parallel. Write no code.
+Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave) into a plan that can be carried out without making any further decisions. The plan says **how**: which files change, in what order, and which work can run in parallel. Write no code.
 
 The requirements can be in any form: a prompt, a ticket body, a document or a file.
 
