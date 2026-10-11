@@ -1,0 +1,13 @@
+# Settings for the skill-improve workflow (local to this repo).
+
+# Independent judge subagents per skill; with more than 1, the median score counts.
+judge_runs: 1
+
+# Most similar skills examined in one run, across all skills.
+max_sources_total: 20
+
+# Fewest sources per skill; also sets the most skills per run: max_sources_total / min_sources_per_skill.
+min_sources_per_skill: 2
+
+# Cap for a single skill, however few skills are in the run.
+max_sources_per_skill: 5

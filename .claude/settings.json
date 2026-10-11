@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(.claude/rubric.md)",
+      "Write(.claude/rubric.md)"
+    ]
+  }
+}
