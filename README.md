@@ -41,13 +41,15 @@ Harness is a reusable, self-improving [Claude Code](https://claude.com/claude-co
 
 ## How to run the project?
 
-Clone this repo, then copy the harness into your project's `.claude/` folder:
+From the root of the project that should get the harness, run:
 
 ```bash
-mkdir -p <project>/.claude && cp -r skills config <project>/.claude/
+curl -fsSL https://raw.githubusercontent.com/busycaesar/Harness/Master/install.sh | bash
 ```
 
-Open Claude Code in that project. The skills are available as slash commands, for example `/dev`.
+This installs the harness into the project's `.claude/` folder. Run it again to update the harness. Files in `.claude/config/` and `.claude/rules/project/` are never overwritten, so your project's settings and rules survive updates.
+
+Then open Claude Code in that project. The skills are available as slash commands.
 
 ## Author
 
