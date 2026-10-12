@@ -1,3 +1,6 @@
+# Paths in this repo that the installer never copies into a project.
+
+.claude
 .gitignore
 README.md
 install.sh
