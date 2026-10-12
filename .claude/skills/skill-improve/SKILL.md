@@ -11,13 +11,13 @@ Run one improvement pass over the harness skills in this repo's `skills/` folder
 
 ## Rules
 
-- One rubric version for the whole run, noted in Step 1. If the `Version:` line of `.claude/rubric.md` changes during the run, stop.
+- One rubric version for the whole run, noted in Step 1. If the `version` in `.claude/rubric.md`'s frontmatter changes during the run, stop.
 - Never edit the rubric (`.claude/rubric.md`), `.claude/rules/skill-conventions.md` or `.claude/config/skill-improve.yaml`.
 - A skill change is kept only if it raised the skill's score. Otherwise the skill is restored exactly as it was.
 
 ## Step 1: Plan the run
 
-1. Note the rubric version from the `Version:` line of `.claude/rubric.md`.
+1. Note the rubric version from the `version` key in `.claude/rubric.md`'s frontmatter.
 2. Read `.claude/config/skill-improve.yaml`: `max_sources_total`, `min_sources_per_skill`, `max_sources_per_skill`.
 3. Skills: the names in `$ARGUMENTS`, or every folder in `skills/` with a `SKILL.md`. If a named skill does not exist, stop and say which.
 4. Max skills per run = `max_sources_total ÷ min_sources_per_skill`, rounded down. If there are more skills than that, tell the user the maximum is reached and ask them to run again with a list of at most that many skills. Stop.

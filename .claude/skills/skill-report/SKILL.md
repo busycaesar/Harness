@@ -16,7 +16,7 @@ From the run folder, read:
 - `decisions.json`: per skill, `kept` or `reverted` (required);
 - `findings/<skill>.md`: what was adopted and rejected, with sources (optional per skill).
 
-If a required file is missing, stop and say which. If the two snapshots have different `rubric` values (the rubric's `Version:`), stop: their scores cannot be compared.
+If a required file is missing, stop and say which. If the two snapshots have different `rubric` values (the `version` in the rubric's frontmatter), stop: their scores cannot be compared.
 
 ## Step 2: Compute
 

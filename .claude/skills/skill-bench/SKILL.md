@@ -17,7 +17,7 @@ Score the harness skills in this repo's `skills/` folder with the rubric and wri
 
 1. The first argument is the output path for the JSON snapshot. If none is given, use `.claude/benchmarks/<YYYY-MM-DD-HHMM>/scores.json`.
 2. The remaining arguments are skill names. If none are given, score every folder in `skills/` that has a `SKILL.md`. If a named skill does not exist, stop and say which.
-3. Read the rubric from `.claude/rubric.md` and note its version from its `Version:` line.
+3. Read the rubric from `.claude/rubric.md` and note its version from the `version` key in its frontmatter.
 4. Read `judge_runs` from `.claude/config/skill-improve.yaml` (default: 1).
 
 ## Step 2: Judge each skill
@@ -45,7 +45,7 @@ Write the snapshot:
 
 ```json
 {
-  "rubric": "<version from the rubric's Version: line, e.g. 1>",
+  "rubric": "<version from the rubric's frontmatter, e.g. 1>",
   "rubric_path": ".claude/rubric.md",
   "judge_runs": 1,
   "scored_at": "<ISO timestamp>",
