@@ -1,5 +1,5 @@
 ---
-name: map
+name: onboard
 description: Draw an interactive map of a project's structure — every file as a dot inside its real folders, with lines showing which file imports which. Writes one self-contained HTML file that opens offline in a browser. Use to get oriented in an unfamiliar codebase.
 argument-hint: "[folder to map, default: the whole project]"
 ---
@@ -18,7 +18,7 @@ Every line on the map is an import found in the code. If an import could point t
 
 ## Step 1: Settings
 
-1. Read the `map` path from `.claude/config/paths.yaml`. If the file or key is missing, use `project-map.html` at the project root. An existing map at that path is replaced.
+1. Read the `onboard` path from `.claude/config/paths.yaml`. If the file or key is missing, use `project-map.html` at the project root. An existing map at that path is replaced.
 2. Read `max_parallel_tasks` from `.claude/config/settings.yaml`. If missing, use 4.
 3. If `$ARGUMENTS` names a folder, map only that folder. Otherwise map the whole project.
 

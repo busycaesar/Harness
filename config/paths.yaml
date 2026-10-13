@@ -5,4 +5,4 @@
 work-items: .claude/work-items/
 
 # The interactive project map: one self-contained HTML file.
-map: project-map.html
+onboard: project-map.html

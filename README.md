@@ -26,7 +26,7 @@ Harness is a reusable, self-improving [Claude Code](https://claude.com/claude-co
  ├── checklist/                  # Hidden helper: requirements → checklist with a proof per item
  ├── implement/                  # Builds the checklist, implements, ticks items with evidence
  ├── dev/                        # /dev: runs spec → plan → implement, resumable
- └── map/                        # Interactive HTML map of folders, files and imports
+ └── onboard/                    # Interactive HTML map of folders, files and imports
  config/                         # Copied into a project's .claude/config/
  ├── paths.yaml                  # Where skills write their output (work items, project map)
  └── settings.yaml               # Tuning, e.g. max_parallel_tasks
