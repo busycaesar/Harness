@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project map</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --panel: #ffffff;
+    --text: #1d1d1b;
+    --muted: #6b6b66;
+    --border: #dddcd6;
+    --edge: #b9b8b2;
+    --out: #2563eb;
+    --in: #d97706;
+    --match: #dc2626;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161615;
+      --panel: #1f1f1d;
+      --text: #ecebe6;
+      --muted: #9a9993;
+      --border: #34332f;
+      --edge: #4a4945;
+      --out: #60a5fa;
+      --in: #fbbf24;
+      --match: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 1fr 320px;
+  }
+  header {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  header h1 { font-size: 16px; margin: 0 8px 0 0; }
+  #stats { color: var(--muted); margin-right: auto; }
+  input, button {
+    font: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+  }
+  input { width: 220px; }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  #graph { min-width: 0; min-height: 0; }
+  aside {
+    border-left: 1px solid var(--border);
+    background: var(--panel);
+    padding: 16px;
+    overflow: auto;
+  }
+  aside h2 { font-size: 15px; margin: 0 0 4px; word-break: break-all; }
+  aside h3 { font-size: 13px; margin: 16px 0 6px; color: var(--muted); font-weight: 600; }
+  aside ul { list-style: none; margin: 0; padding: 0; }
+  aside li { padding: 2px 0; word-break: break-all; }
+  aside a { color: inherit; cursor: pointer; text-decoration: underline dotted; }
+  aside a:hover { text-decoration: underline; }
+  .out { color: var(--out); }
+  .in { color: var(--in); }
+  .hint { color: var(--muted); }
+  @media (max-width: 760px) {
+    body { grid-template-columns: 1fr; grid-template-rows: auto 1fr 40%; }
+    aside { border-left: 0; border-top: 1px solid var(--border); }
+    input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Project map</h1>
+  <span id="stats"></span>
+  <input id="search" type="search" placeholder="Search files">
+  <button id="fit">Fit</button>
+  <button id="relayout">Re-layout</button>
+  <button id="collapse">Collapse all</button>
+  <button id="expand">Expand all</button>
+</header>
+<div id="graph"></div>
+<aside id="panel">
+  <p class="hint">Click a file to see what it imports and what imports it.</p>
+  <p class="hint">Click a folder to collapse or expand it. Lines point from the importing file to the imported file.</p>
+</aside>
+
+<script id="data" type="application/json">
+/*@@DATA@@*/
+</script>
+<script>
+/*@@LIBRARY@@*/
+</script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('data').textContent);
+  var css = getComputedStyle(document.documentElement);
+  var color = function (name) { return css.getPropertyValue(name).trim(); };
+  var palette = ['#4e79a7', '#f28e2b', '#59a14f', '#e15759', '#76b7b2', '#edc948', '#b07aa1', '#ff9da7', '#9c755f', '#8cd17d', '#499894', '#d37295'];
+
+  var files = data.files.slice().sort();
+  var fileSet = new Set(files);
+  var imports = data.imports.filter(function (p) { return fileSet.has(p[0]) && fileSet.has(p[1]) && p[0] !== p[1]; });
+
+  // Who imports what, per file, for the side panel.
+  var importsOf = {};
+  var importedBy = {};
+  files.forEach(function (f) { importsOf[f] = []; importedBy[f] = []; });
+  imports.forEach(function (p) { importsOf[p[0]].push(p[1]); importedBy[p[1]].push(p[0]); });
+
+  var parentOf = function (path) {
+    var i = path.lastIndexOf('/');
+    return i === -1 ? null : path.slice(0, i);
+  };
+  var baseName = function (path) { return path.slice(path.lastIndexOf('/') + 1); };
+
+  // Every folder on the way to every file, so the nesting matches the disk.
+  var folders = new Set();
+  files.forEach(function (f) {
+    for (var d = parentOf(f); d; d = parentOf(d)) folders.add(d);
+  });
+
+  var tops = Array.from(folders).filter(function (d) { return !parentOf(d); }).sort();
+  var topColor = {};
+  tops.forEach(function (d, i) { topColor[d] = palette[i % palette.length]; });
+  var colorOf = function (path) {
+    var top = path.split('/')[0];
+    return topColor[top] || color('--muted');
+  };
+
+  var elements = [];
+  Array.from(folders).sort().forEach(function (d) {
+    var p = parentOf(d);
+    elements.push({ group: 'nodes', data: { id: 'd:' + d, path: d, label: baseName(d) + '/', kind: 'folder', color: colorOf(d), parent: p ? 'd:' + p : undefined } });
+  });
+  files.forEach(function (f) {
+    var p = parentOf(f);
+    elements.push({ group: 'nodes', data: { id: 'f:' + f, path: f, label: baseName(f), kind: 'file', color: colorOf(f), parent: p ? 'd:' + p : undefined } });
+  });
+  imports.forEach(function (p, i) {
+    elements.push({ group: 'edges', data: { id: 'e:' + i, source: 'f:' + p[0], target: 'f:' + p[1] } });
+  });
+
+  document.getElementById('title').textContent = data.project || 'Project map';
+  document.title = (data.project || 'Project') + ' map';
+  document.getElementById('stats').textContent = files.length + ' files, ' + folders.size + ' folders, ' + imports.length + ' imports';
+
+  var layout = { name: 'cose', animate: false, randomize: true, nodeDimensionsIncludeLabels: true, padding: 30, nodeRepulsion: function () { return 8000; }, idealEdgeLength: function () { return 60; } };
+
+  var cy = cytoscape({
+    container: document.getElementById('graph'),
+    elements: elements,
+    minZoom: 0.05,
+    maxZoom: 4,
+    style: [
+      { selector: 'node', style: { 'label': 'data(label)', 'color': color('--text'), 'font-size': 10, 'min-zoomed-font-size': 7 } },
+      { selector: 'node[kind = "file"]', style: { 'background-color': 'data(color)', 'width': 14, 'height': 14, 'text-valign': 'bottom', 'text-margin-y': 3 } },
+      { selector: 'node[kind = "folder"]', style: { 'shape': 'round-rectangle', 'background-color': 'data(color)', 'background-opacity': 0.08, 'border-color': 'data(color)', 'border-width': 1.5, 'border-opacity': 0.6, 'padding': 14, 'text-valign': 'top', 'text-halign': 'center', 'font-size': 12, 'font-weight': 'bold', 'text-margin-y': -4 } },
+      { selector: 'node.collapsed', style: { 'background-opacity': 0.85, 'width': 34, 'height': 34, 'text-valign': 'bottom', 'text-margin-y': 4 } },
+      { selector: 'edge', style: { 'width': 1, 'line-color': color('--edge'), 'target-arrow-color': color('--edge'), 'target-arrow-shape': 'triangle', 'arrow-scale': 0.7, 'curve-style': 'straight' } },
+      { selector: 'edge.meta', style: { 'width': 'data(width)', 'line-style': 'dashed' } },
+      { selector: 'edge.out', style: { 'line-color': color('--out'), 'target-arrow-color': color('--out'), 'width': 2, 'z-index': 10 } },
+      { selector: 'edge.in', style: { 'line-color': color('--in'), 'target-arrow-color': color('--in'), 'width': 2, 'z-index': 10 } },
+      { selector: 'node:selected', style: { 'border-width': 3, 'border-color': color('--text') } },
+      { selector: 'node.match', style: { 'border-width': 3, 'border-color': color('--match') } },
+      { selector: '.faded', style: { 'opacity': 0.12 } }
+    ],
+    layout: layout
+  });
+
+  // Keep every element, so collapsed folders can bring theirs back.
+  var all = cy.elements();
+  var depth = function (n) { return n.data('path').split('/').length; };
+  var collapsed = new Set();
+
+  // The node that stands in for a file: itself, or its outermost collapsed folder.
+  var representative = function (path) {
+    var rep = 'f:' + path;
+    for (var d = parentOf(path); d; d = parentOf(d)) {
+      if (collapsed.has(d)) rep = 'd:' + d;
+    }
+    return rep;
+  };
+  var hidden = function (n) {
+    for (var d = parentOf(n.data('path')); d; d = parentOf(d)) {
+      if (collapsed.has(d)) return true;
+    }
+    return false;
+  };
+
+  var render = function () {
+    cy.batch(function () {
+      cy.remove('edge.meta');
+      var nodes = all.nodes().sort(function (a, b) { return depth(a) - depth(b); });
+      nodes.forEach(function (n) {
+        var hide = hidden(n);
+        if (hide && !n.removed()) n.remove();
+        if (!hide && n.removed()) n.restore();
+        if (n.data('kind') === 'folder') n.toggleClass('collapsed', collapsed.has(n.data('path')));
+      });
+      var meta = {};
+      all.edges().forEach(function (e) {
+        var s = representative(e.source().data('path'));
+        var t = representative(e.target().data('path'));
+        var direct = s === e.data('source') && t === e.data('target');
+        if (direct && e.removed()) e.restore();
+        if (!direct && !e.removed()) e.remove();
+        if (!direct && s !== t) meta[s + '>' + t] = (meta[s + '>' + t] || 0) + 1;
+      });
+      Object.keys(meta).forEach(function (k) {
+        var st = k.split('>');
+        cy.add({ group: 'edges', classes: 'meta', data: { id: 'm:' + k, source: st[0], target: st[1], width: Math.min(1 + Math.log2(meta[k]), 6) } });
+      });
+      cy.nodes('[kind = "folder"]').forEach(function (n) {
+        var p = n.data('path');
+        var count = files.filter(function (f) { return f.indexOf(p + '/') === 0; }).length;
+        n.data('label', baseName(p) + '/' + (collapsed.has(p) ? ' (' + count + ')' : ''));
+      });
+    });
+    clearFocus();
+  };
+
+  var panel = document.getElementById('panel');
+  var clearFocus = function () {
+    cy.elements().removeClass('faded out in');
+  };
+
+  var link = function (path) {
+    return '<li><a data-path="' + path.replace(/"/g, '&quot;') + '">' + escapeHtml(path) + '</a></li>';
+  };
+  var escapeHtml = function (s) {
+    return s.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+  };
+  var list = function (title, cls, paths) {
+    var body = paths.length ? paths.slice().sort().map(link).join('') : '<li class="hint">None</li>';
+    return '<h3 class="' + cls + '">' + title + ' (' + paths.length + ')</h3><ul>' + body + '</ul>';
+  };
+
+  var focusFile = function (path) {
+    var rep = cy.getElementById(representative(path));
+    if (rep.data('kind') === 'folder') {
+      collapsed.forEach(function (d) { if (path.indexOf(d + '/') === 0) collapsed.delete(d); });
+      render();
+    }
+    var node = cy.getElementById('f:' + path);
+    cy.elements().unselect();
+    node.select();
+    cy.elements().addClass('faded');
+    var keep = node.union(node.ancestors());
+    node.outgoers('edge').addClass('out');
+    node.incomers('edge').addClass('in');
+    keep = keep.union(node.connectedEdges()).union(node.neighborhood('node'));
+    keep = keep.union(node.neighborhood('node').ancestors());
+    keep.removeClass('faded');
+    panel.innerHTML = '<h2>' + escapeHtml(path) + '</h2>' + list('Imports', 'out', importsOf[path]) + list('Imported by', 'in', importedBy[path]);
+    cy.animate({ center: { eles: node }, duration: 250 });
+  };
+
+  panel.addEventListener('click', function (ev) {
+    var a = ev.target.closest('a[data-path]');
+    if (a) focusFile(a.getAttribute('data-path'));
+  });
+
+  cy.on('tap', 'node[kind = "file"]', function (ev) { focusFile(ev.target.data('path')); });
+  cy.on('tap', 'node[kind = "folder"]', function (ev) {
+    var p = ev.target.data('path');
+    if (collapsed.has(p)) collapsed.delete(p); else collapsed.add(p);
+    render();
+  });
+  cy.on('tap', function (ev) {
+    if (ev.target === cy) { clearFocus(); cy.elements().unselect(); }
+  });
+
+  var search = document.getElementById('search');
+  search.addEventListener('input', function () {
+    var q = search.value.trim().toLowerCase();
+    cy.nodes().removeClass('match');
+    clearFocus();
+    if (!q) return;
+    var hits = cy.nodes('[kind = "file"]').filter(function (n) { return n.data('path').toLowerCase().indexOf(q) !== -1; });
+    cy.elements().addClass('faded');
+    hits.union(hits.ancestors()).removeClass('faded');
+    hits.addClass('match');
+  });
+  search.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Enter') return;
+    var q = search.value.trim().toLowerCase();
+    var hit = files.filter(function (f) { return f.toLowerCase().indexOf(q) !== -1; })[0];
+    if (q && hit) focusFile(hit);
+  });
+
+  document.getElementById('fit').addEventListener('click', function () { cy.fit(undefined, 30); });
+  document.getElementById('relayout').addEventListener('click', function () { cy.layout(layout).run(); });
+  document.getElementById('collapse').addEventListener('click', function () {
+    collapsed = new Set(tops);
+    render();
+    cy.layout(layout).run();
+  });
+  document.getElementById('expand').addEventListener('click', function () {
+    collapsed = new Set();
+    render();
+    cy.layout(layout).run();
+  });
+})();
+</script>
+</body>
+</html>
