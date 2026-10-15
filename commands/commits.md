@@ -1,5 +1,6 @@
 ---
 description: Group all changes NOT currently staged into multiple logical commits and output the git add / git commit commands — never runs them
+disable-model-invocation: true
 ---
 
 # Commits (multiple commit plan for unstaged/untracked files)
