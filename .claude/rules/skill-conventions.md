@@ -1,6 +1,6 @@
 # Skill conventions
 
-Design decisions every harness skill in `skills/` must follow. They were made on purpose: do not "improve" a skill by breaking one, even if another harness does it differently. To change a convention, the user changes this file.
+Design decisions every harness skill in `skills/` and command in `commands/` must follow; in this file, "skill" covers both. They were made on purpose: do not "improve" a skill by breaking one, even if another harness does it differently. To change a convention, the user changes this file.
 
 ## Isolation
 
@@ -27,6 +27,8 @@ Design decisions every harness skill in `skills/` must follow. They were made on
 ## Format
 
 - Claude Code skill format: `skills/<name>/SKILL.md` with `name` and `description` frontmatter; templates and supporting files sit in the same folder and are linked from `SKILL.md`.
+- Claude Code command format: `commands/<name>.md` with `description` frontmatter.
+- A command is a single file that only the user triggers and nothing invokes. Anything with supporting files, or that a skill or command invokes, is a skill.
 - No Cursor-era formats: no `.mdc`, `alwaysApply` or `globs`.
 - Do not add `disable-model-invocation: true` to a skill that another skill invokes; it would block that call.
 - Concise: every line earns its place. No padding, no repeated instructions, no motivational text.

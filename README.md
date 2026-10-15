@@ -25,13 +25,18 @@ Harness is a reusable, self-improving [Claude Code](https://claude.com/claude-co
  ├── plan/                       # Requirements → file-specific tasks grouped into parallel waves
  ├── checklist/                  # Hidden helper: requirements → checklist with a proof per item
  ├── implement/                  # Builds the checklist, implements, ticks items with evidence
- ├── dev/                        # /dev: runs spec → plan → implement, resumable
  └── onboard/                    # Interactive HTML map of folders, files and imports
+ commands/                       # Frequently used prompts, copied into a project's .claude/commands/
+ ├── dev.md                      # /dev: runs spec → plan → implement, resumable
+ ├── commit.md                   # Commit message for the staged files, as a command to run
+ └── commits.md                  # Unstaged changes grouped into commits, as commands to run
  config/                         # Copied into a project's .claude/config/
  ├── paths.yaml                  # Where skills write their output (work items, project map)
  └── settings.yaml               # Tuning, e.g. max_parallel_tasks
  .claude/                        # Maintenance tooling for this repo only; not copied into projects
- ├── skills/                     # /skill-improve and its steps: bench, find, adopt, report
+ ├── commands/
+ │    └── skill-improve.md       # /skill-improve: bench, find, adopt, bench again, report
+ ├── skills/                     # The steps of /skill-improve: bench, find, adopt, report
  ├── rules/
  │    └── skill-conventions.md   # Design decisions every harness skill must follow
  ├── config/

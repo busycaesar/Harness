@@ -1,5 +1,4 @@
 ---
-name: dev
 description: Take requirements (a prompt, ticket description or requirements file) all the way to implemented changes by running the spec, plan and implement skills in order.
 argument-hint: <requirements text, path to a requirements file, or an existing work item folder to resume>
 disable-model-invocation: true

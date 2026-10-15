@@ -1,5 +1,4 @@
 ---
-name: skill-improve
 description: Improve this repo's harness skills end to end — score them, find similar skills and adopt what they do better, score again, keep only changes that raised the score, and write a report.
 argument-hint: [skill names…]
 disable-model-invocation: true
