@@ -1,0 +1,41 @@
+# Project commands: the shell commands this project uses, found by scanning its files.
+# A new scan replaces every entry except those with `source: manual`, which it keeps unchanged.
+# To add a command by hand, or to keep your edit to one, set its `source` to `manual`.
+
+# One section per app or package. A project with a single app has one section.
+sections:
+  # The app's name from its manifest, or its folder name.
+  - name: <name>
+    # The app's folder, relative to the project root; `.` for the root.
+    path: <folder>
+    # The package manager and the file that shows it. Omitted when none applies.
+    package_manager:
+      name: <name>
+      source: <file>
+    # Only categories with evidence appear, in this order.
+    commands:
+      install:
+        command: <command>
+        # Folder to run it from, relative to the project root.
+        cwd: <folder>
+        # What must be in place first: env vars by name, files, running services. Omitted when nothing.
+        needs:
+          - <env var name, file or service>
+        # Where it came from: `<file>:<line>`, `<file> <key>`, or `manual`.
+        source: <file>:<line>
+      # Every other <entry> has the same fields as `install`.
+      # One entry per environment, named as the evidence names it.
+      run:
+        <environment>: <entry>
+      build: <entry>
+      # `file` and `name` only where the test tooling supports them; `{file}` and `{name}` stand for the argument.
+      test:
+        all: <entry>
+        file: <entry>
+        name: <entry>
+      lint: <entry>
+      format: <entry>
+      typecheck: <entry>
+      # Any other command found, named by what it does.
+      other:
+        <short-name>: <entry>

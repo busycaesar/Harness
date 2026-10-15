@@ -9,3 +9,6 @@ onboard: project-map.html
 
 # The clean-code report: one Markdown file, replaced on each run.
 clean-code: clean-code-report.md
+
+# The project's own shell commands (install, run, build, test and more): one YAML file, refreshed on each scan.
+project-commands: .claude/config/project-commands.yaml
