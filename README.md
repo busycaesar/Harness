@@ -29,9 +29,13 @@ Harness is a reusable, self-improving [Claude Code](https://claude.com/claude-co
  commands/                       # Frequently used prompts, copied into a project's .claude/commands/
  ├── dev.md                      # /dev: runs spec → plan → implement, resumable
  ├── commit.md                   # Commit message for the staged files, as a command to run
- └── commits.md                  # Unstaged changes grouped into commits, as commands to run
+ ├── commits.md                  # Unstaged changes grouped into commits, as commands to run
+ └── clean-code.md               # Checks code against the clean-code rules; writes a Markdown report
+ rules/                          # Always loaded; copied into a project's .claude/rules/
+ └── harness/
+      └── clean-code/            # Simplicity, design, structure, readability and error handling
  config/                         # Copied into a project's .claude/config/
- ├── paths.yaml                  # Where skills write their output (work items, project map)
+ ├── paths.yaml                  # Where skills write their output (work items, project map, clean-code report)
  └── settings.yaml               # Tuning, e.g. max_parallel_tasks
  .claude/                        # Maintenance tooling for this repo only; not copied into projects
  ├── commands/

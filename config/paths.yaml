@@ -6,3 +6,6 @@ work-items: .claude/work-items/
 
 # The interactive project map: one self-contained HTML file.
 onboard: project-map.html
+
+# The clean-code report: one Markdown file, replaced on each run.
+clean-code: clean-code-report.md
