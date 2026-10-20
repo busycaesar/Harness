@@ -13,43 +13,21 @@ Harness is a reusable, self-improving [Claude Code](https://claude.com/claude-co
 
 ## Features
 
-- **`/dev`**: takes requirements from a prompt, ticket or file through `spec`, `plan` and `implement` to working changes.
+- **`/dev`**: takes requirements from a prompt, ticket or file through `spec`, `plan` and `implement` to working changes, then checks them against the clean-code rules.
 - **`/skill-improve`** (this repo only): scores the harness skills, learns from similar skills elsewhere and keeps only the changes that raise the score.
 
-## Project Structure
+## Skills and commands
 
-```text
-.
- skills/                         # Harness skills, copied into a project's .claude/skills/
- ├── spec/                       # Requirements → unambiguous spec; asks about every gap
- ├── plan/                       # Requirements → file-specific tasks grouped into parallel waves
- ├── checklist/                  # Hidden helper: requirements → checklist with a proof per item
- ├── implement/                  # Builds the checklist, implements, ticks items with evidence
- ├── onboard/                    # Reads a codebase: its files, imports, entry points and tiers
- ├── architecture-design/        # Hidden helper: draws those findings as an interactive HTML map
- └── scan-commands/              # Finds the project's install, run, build and test commands and stores them
- commands/                       # Frequently used prompts, copied into a project's .claude/commands/
- ├── dev.md                      # /dev: runs spec → plan → implement, resumable
- ├── commit.md                   # Commit message for the staged files, as a command to run
- ├── commits.md                  # Unstaged changes grouped into commits, as commands to run
- └── clean-code.md               # Checks code against the clean-code rules; writes a Markdown report
- rules/                          # Always loaded; copied into a project's .claude/rules/
- └── harness/
-      └── clean-code/            # Simplicity, design, structure, readability and error handling
- config/                         # Copied into a project's .claude/config/
- ├── paths.yaml                  # Where skills write their output (work items, project map, clean-code report, project commands)
- └── settings.yaml               # Tuning, e.g. max_parallel_tasks
- .claude/                        # Maintenance tooling for this repo only; not copied into projects
- ├── commands/
- │    └── skill-improve.md       # /skill-improve: bench, find, adopt, bench again, report
- ├── skills/                     # The steps of /skill-improve: bench, find, adopt, report
- ├── rules/
- │    └── skill-conventions.md   # Design decisions every harness skill must follow
- ├── config/
- │    └── skill-improve.yaml     # Source budget and judge settings for /skill-improve
- ├── rubric.md                   # Locked scoring rubric for harness skills
- └── settings.json               # Deny rule that locks the rubric
-```
+- **`/dev`**: Takes requirements all the way to implemented changes by running spec, plan and implement in order, then a clean-code check.
+- **`/spec`**: Turns requirements into a complete, unambiguous specification, asking about every gap.
+- **`/plan`**: Researches the codebase and writes a plan of file-specific tasks grouped into parallel waves.
+- **`/implement`**: Changes the project's files until every requirement is proven met against a verification checklist.
+- **`/onboard`**: Maps a project's architecture (files, imports, entry points, tiers) as an interactive HTML map.
+- **`/scan-commands`**: Finds the project's install, run, build, test and other commands and stores them in one YAML file.
+- **`/clean-code`**: Checks code against the clean-code rules and writes a Markdown report; never edits code.
+- **`/deep-verify`**: Verifies claims about code rigorously with multiple agents and evidence-backed answers.
+- **`/commit`**: Suggests one commit message for the staged files; never runs git.
+- **`/commits`**: Groups unstaged changes into logical commits and outputs the commands to run; never runs them.
 
 ## How to run the project?
 
