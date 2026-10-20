@@ -5,7 +5,7 @@ Design decisions every harness skill in `skills/` and command in `commands/` mus
 ## Isolation
 
 - A skill never names, references or hints at another skill, or at what happens before or after it.
-- Three exceptions only: `implement` invokes `checklist`, `onboard` invokes `architecture-design`, and `dev` invokes `spec`, `plan` and `implement` in that order.
+- Three exceptions only: `implement` invokes `checklist`, `onboard` invokes `architecture-design`, and `dev` invokes `spec`, `plan`, `implement` and `clean-code` in that order, then `implement` again for the findings the user chooses to fix.
 - A skill accepts its input in any reasonable form (prompt, ticket body, file) and does not care which skill, if any, produced it.
 
 ## Behaviour

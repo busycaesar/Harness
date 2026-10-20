@@ -1,7 +1,7 @@
 ---
+name: clean-code
 description: Check code against the clean-code rules and write a Markdown report of every place that breaks one. Checks uncommitted changes by default; never edits code.
 argument-hint: "[staged | branch | all | <path>...] (default: all uncommitted changes)"
-disable-model-invocation: true
 ---
 
 # Clean code check
@@ -83,4 +83,4 @@ Files checked: <n>
 
 ## Step 5: Report
 
-Print only one line with the files checked and the findings per rule file, then the report's path.
+Print only one line with the files checked, the total findings and the findings per rule file, then the report's path.

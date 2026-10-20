@@ -24,8 +24,11 @@ The input is one of:
 
 - **Requirements**: a prompt, ticket body, spec or requirements file.
 - **A plan**: a document of tasks grouped into waves, which points to its source requirements (a `Requirements:` line, or the requirements pasted inside it).
+- **Findings**: a list of problems in existing code, each with a rule, a `path:line` and what is wrong, optionally with the work item folder it belongs to.
 
 If it is a plan, find its source requirements. If a plan does not say where its requirements are, ask the user.
+
+If it is findings, follow "Fixing findings" instead of Steps 2 to 6.
 
 ## Step 2: Build the checklist
 
@@ -51,12 +54,13 @@ Before changing anything, read the code the change touches: where it lands, the 
 1. Read `max_parallel_tasks` from `.claude/config/settings.yaml`. If missing, use 4.
 2. Work through the waves in order. Start no wave until the previous one is complete.
 3. In each wave, launch one subagent per task with the `Agent` tool, all in a single message so they run in parallel, at most `max_parallel_tasks` at a time. All subagents work in the project folder directly. Give each one:
-   - the task: its approach, files and "Done when";
+   - the task: its approach, files, units and "Done when";
    - the requirements and checklist items it covers, quoted in full;
-   - the patterns and rules it must follow;
-   - these limits: edit only the files the task lists; if another file must change, stop and report back instead; no git operations; do not tick checklist items.
+   - the patterns it must follow, and the project's rules in `.claude/rules/`;
+   - how to build: the units exactly as named and signed, writing their bodies, private helpers and error handling itself;
+   - these limits: edit only the files the task lists; if another file must change, or a unit another task uses must change, stop and report back instead; report any other change to a unit; no git operations; do not tick checklist items.
 4. When the wave finishes, confirm each task's "Done when" yourself. Fix or re-run any task that fell short before moving on.
-5. If the plan turns out to be wrong (a file is not where it says, a dependency is missing), adapt the work to the codebase and note the deviation for the final report. If the deviation changes behaviour the requirements describe, ask the user.
+5. If the plan turns out to be wrong (a file is not where it says, a dependency is missing), adapt the work to the codebase and note the deviation for the final report. If the deviation changes behaviour the requirements describe, ask the user. A planned unit that proves wrong may be fixed locally and reported; if the fix changes a unit another task uses, ask the user first.
 
 ### Without a plan
 
@@ -78,6 +82,12 @@ Go through the checklist item by item:
 Run only what the proofs need. Running the project's full test suite, build or lint is outside this skill's scope.
 
 Repeat until every item is ticked, or the only unticked items are ones that cannot be met and the user has been told why.
+
+## Fixing findings
+
+1. Fix exactly the given findings and nothing else, reading the code around each first (Step 3 applies). Build no checklist; an existing one is never rewritten.
+2. If the work item has a `checklist.md`, re-run every item's proof afterwards. If a fix breaks a proof or a requirement, undo it and leave that finding unfixed. Never weaken a proof.
+3. Report the files changed, the findings fixed, any finding left unfixed with why, and each proof's result.
 
 ## Step 6: Report
 
