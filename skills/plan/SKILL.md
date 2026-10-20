@@ -6,7 +6,7 @@ argument-hint: <requirements text or path to a requirements file>
 
 # Plan: Requirements → Implementation Plan
 
-Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave) into a plan that can be carried out without making any further decisions. The plan says **how**: which files change, in what order, and which work can run in parallel. Write no code.
+Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave) into a plan that can be carried out without making any further decisions. The plan says **how**: which files change, the shape of the code in them, in what order, and which work can run in parallel. Write no code.
 
 The requirements can be in any form: a prompt, a ticket body, a document or a file.
 
@@ -45,7 +45,7 @@ Record what matters under "Codebase context", each item with a `path:line` refer
 
 ## Step 4: Settle the approach
 
-Decide how each requirement will be built.
+Decide how each requirement will be built. The design follows the project's rules in `.claude/rules/`; where a rule decides a split, a signature or a placement, the Decision names that rule.
 
 - **Decide yourself** when the codebase has one clear way of doing it. Record it as a Decision with the `path:line` you followed.
 - **Ask the user** when the choice has real consequences:
@@ -61,7 +61,8 @@ Decide how each requirement will be built.
 1. **Contracts first.** Shared types, interfaces, schemas, API shapes or migrations that several pieces depend on become their own early tasks. Once they are fixed, the work that uses them can run in parallel.
 2. **One task = one agent session.** A task is small enough for one agent to finish and check on its own.
 3. **Tests live inside the task.** Each task writes or updates the tests for its own change, and "Done when" includes them passing. Add a final task for tests that span several tasks (integration or end-to-end), if the requirements need them.
-4. For each task, record everything in the template: wave, requirements covered, files with `(create)` or `(modify)`, dependencies, approach, and a checkable "Done when".
+4. **Design the units.** Decide whether the logic is a class, a set of functions or a module, and whether it gets its own file or goes into an existing one, and where. List every new or changed public or shared function, class or module as a unit: name, signature and a one-sentence responsibility. Private helpers and function bodies are not planned. A unit that another task uses has an exact name and signature, since tasks in the same wave run in parallel.
+5. For each task, record everything in the template: wave, requirements covered, files with `(create)` or `(modify)`, units, dependencies, approach, and a checkable "Done when".
 
 A task **owns** the files it lists. No other task in the same wave may touch them.
 
@@ -83,6 +84,8 @@ Fix the plan until every item holds:
 - [ ] No dependency cycles. No task depends on a task in the same or a later wave.
 - [ ] No two tasks in a wave share a file, and no wave exceeds `max_parallel_tasks`.
 - [ ] Every task has a checkable "Done when".
+- [ ] Every unit has one responsibility, and the design follows `.claude/rules/`.
+- [ ] Every unit another task uses has an exact name and signature.
 - [ ] Every decision says why, and who decided.
 
 ## Step 8: Save and report

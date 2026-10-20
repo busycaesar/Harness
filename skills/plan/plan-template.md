@@ -52,6 +52,8 @@ flowchart LR
 - Wave: 1
 - Covers: R1, R2
 - Files: `path/a.ext` (create), `path/b.ext` (modify)
+- Units:
+  - `{name}({params}) -> {result}` — {one-sentence responsibility}
 - Depends on: —
 - Approach: {what to change and how, in a few lines; name the pattern to follow}
 - Done when: {checkable condition, including the tests this task adds passing}
