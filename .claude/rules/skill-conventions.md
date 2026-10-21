@@ -10,7 +10,7 @@ Design decisions every harness skill in `skills/` and command in `commands/` mus
 
 ## Behaviour
 
-- **Never assume.** Every statement a skill writes traces to the requirements, the codebase or an answer from the user. Gaps are asked about, never filled with defaults.
+- **Never assume.** Skills follow the never-assume rule in `rules/harness/never-assume.md`, including its exception for choices the user explicitly delegates.
 - **No approval gates.** A skill produces its output and stops. It asks the user questions only to resolve gaps or consequential choices, not for sign-off on its own output. (Exception: `spec` asks the user to approve the final spec, because the spec is the user's statement of intent.)
 - **Each skill writes only its own output.** `spec` writes the spec, `plan` the plan, `checklist` the checklist. `implement` changes project files and ticks checklist items.
 - **No git state changes.** No skill stages, commits, stashes, branches, resets or checks out. Read-only git commands are fine.
