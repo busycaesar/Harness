@@ -6,19 +6,19 @@ argument-hint: "[staged | branch | all | <path>...] (default: all uncommitted ch
 
 # Clean code check
 
-Check code against the rules in `.claude/rules/harness/clean-code/` and write a report of what breaks them.
+Check code against the clean-code rules and write a report of what breaks them.
 
 Report only: changes no file except the report. No git state changes.
 
 ## The one rule: never assume
 
-Every finding traces to a specific rule in `.claude/rules/harness/clean-code/`. Check no other rules. If it is unclear whether code breaks a rule, do not flag it.
+Every finding traces to a specific rule in the rules folder. Check no other rules. If it is unclear whether code breaks a rule, do not flag it.
 
 ## Step 1: Settings
 
 1. Read the `clean-code` path from `.claude/config/paths.yaml`. If the file or key is missing, use `clean-code-report.md` at the project root. An existing report at that path is replaced.
 2. Read `max_parallel_tasks` from `.claude/config/settings.yaml`. If missing, use 4.
-3. Read every file in `.claude/rules/harness/clean-code/`.
+3. Read the `clean-code-rules` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/rules/harness/clean-code/`. This is the rules folder; read every file in it.
 
 ## Step 2: Find the code to check
 
@@ -75,7 +75,7 @@ Files checked: <n>
 - [<path>:<line>](<link>#L<line>) · **<principle>** (<rule file>): <what is wrong>. Fix: <suggested fix>.
 ```
 
-- The summary has one row per file in `.claude/rules/harness/clean-code/`, named by its file name without `.md`, including those with no findings.
+- The summary has one row per file in the rules folder, named by its file name without `.md`, including those with no findings.
 - One `###` section per file with findings, in path order; findings in line order.
 - `<path>` is relative to the project root. `<link>` is the same file relative to the report's folder, so the link opens from a Markdown preview.
 - No severity levels.
