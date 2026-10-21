@@ -1,18 +1,18 @@
 ---
 name: architecture-design
-description: "Internal renderer. Turns a prepared architecture data file into the interactive project-map HTML. Invoked by other skills, such as onboard, never directly by a user; it performs no analysis of its own and will not read a codebase."
+description: "Renderer. Turns an architecture data file into the interactive project-map HTML. It performs no analysis of its own and will not read a codebase."
 user-invocable: false
 ---
 
 # Architecture map: how it is drawn
 
-Takes a data file that another skill has already prepared and writes one self-contained HTML file.
+Takes an architecture data file and writes one self-contained HTML file.
 
 This skill owns every presentation decision. It owns no analysis: it never lists files, resolves an import, or decides a tier. Whatever the data says is what gets drawn.
 
 ## Input
 
-A JSON file in this shape, produced by the calling skill:
+A JSON file in this shape:
 
 ```json
 {
@@ -46,7 +46,9 @@ A project too large for one view arrives as several maps: one per section, each 
 }
 ```
 
-A data file carrying `sections` is a master; one carrying `files` is an ordinary map. The caller decides which sections exist and what they contain. Never infer them.
+Each section's `url` names the map drawn for it. `imports` pairs section paths the same way it pairs files, `[importing, imported]`; `weights` gives how many file imports each pair stands for.
+
+A data file carrying `sections` is a master; one carrying `files` is an ordinary map. The data decides which sections exist and what they contain. Never infer them.
 
 Masters nest. A section too large to draw at once arrives as a master of its own, listing its subsections, and the map above points at it exactly as it would point at a file map. Nothing here changes with depth: a master is drawn from `sections` whether it sits over a whole project or over one part of it, and the `url` on a section may lead to either kind.
 
@@ -60,7 +62,7 @@ bash <skill folder>/build.sh <data file> <map path>
 
 It substitutes the data and the embedded graph library ([cytoscape.min.js](cytoscape.min.js)) into [template.html](template.html). The result opens offline in any browser, with no server and no network.
 
-The caller owns the data file, including deleting it afterwards.
+Never change or delete the data file.
 
 ## Shape
 
@@ -126,7 +128,7 @@ A section map is an ordinary map and needs nothing special. It holds only its ow
 
 ## Rules
 
-- Presentation only. If a change needs new facts about the codebase, it belongs in the calling skill, not here.
+- Presentation only. If a change needs new facts about the codebase, it belongs in the data file, not here.
 - Draw exactly what the data says. Never infer an arrow, a tier, or a grouping the data did not provide.
 - The output stays one self-contained file: no CDN, no external stylesheet, no fetch.
 - Keep it readable at both ends of the range, a handful of files and tens of thousands.
