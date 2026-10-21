@@ -39,7 +39,7 @@ For every requirement, find out:
 - **Call sites and imports**: who uses the code that will change. This sets the order of the work and reveals knock-on changes.
 - **Where new files belong**: next to their closest existing equivalent.
 - **Tests**: where tests live and how they are written.
-- **Project commands**: build, test and lint or type-check commands, from the project's rules, `package.json`, `Makefile`, CI config or equivalent.
+- **Project commands**: build, test and lint or type-check commands. Read the `project-commands` path from `.claude/config/paths.yaml` (if the key is missing, use `.claude/config/project-commands.yaml`) and take them from that file. Derive any it lacks, or all if it does not exist, from the project's rules, manifests such as `package.json` or `Makefile`, or CI config.
 
 Record what matters under "Codebase context", each item with a `path:line` reference.
 
@@ -84,7 +84,7 @@ Fix the plan until every item holds:
 - [ ] No dependency cycles. No task depends on a task in the same or a later wave.
 - [ ] No two tasks in a wave share a file, and no wave exceeds `max_parallel_tasks`.
 - [ ] Every task has a checkable "Done when".
-- [ ] Every unit has one responsibility, and the design follows `.claude/rules/`.
+- [ ] The design follows `.claude/rules/`.
 - [ ] Every unit another task uses has an exact name and signature.
 - [ ] Every decision says why, and who decided.
 
