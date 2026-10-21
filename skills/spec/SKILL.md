@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Turn technical requirements into a complete, unambiguous specification file. Use when the user hands over requirements, a feature request, or a ticket to build — before any planning or code. Researches the codebase for facts, asks the user about every remaining ambiguity, and repeats until none is left.
+description: Turn technical requirements into a complete, unambiguous specification file. Use when the user hands over requirements, a feature request, or a ticket to build. Researches the codebase for facts, asks the user about every remaining ambiguity, and repeats until none is left.
 argument-hint: <requirements text or path to a requirements file>
 ---
 

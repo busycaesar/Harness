@@ -1,6 +1,6 @@
 ---
 name: checklist
-description: Turn technical requirements into a verification checklist — one item per requirement or acceptance criterion, each with an objective proof of how to confirm it is met. Built from the requirements alone, before any code is written.
+description: Turn technical requirements into a verification checklist — one item per requirement or acceptance criterion, each with an objective proof of how to confirm it is met. Built from the requirements alone.
 argument-hint: <requirements text or path to a requirements file>
 user-invocable: false
 context: fork
@@ -52,6 +52,6 @@ Fix the checklist until every item holds:
 
 ## Step 5: Save and report
 
-If any requirement needs clarification, do not write the file. A checklist with gaps would let unchecked requirements pass. Instead, report each one with its requirement ID and why no objective proof can be written for it as stated, so the caller can resolve them and run this again.
+If any requirement needs clarification, do not write the file. A checklist with gaps would let unchecked requirements pass. Instead, report each one with its requirement ID and why no objective proof can be written for it as stated, then stop.
 
 Otherwise, write the checklist from [checklist-template.md](checklist-template.md) to `<work-items>/<slug>/checklist.md` and report its path and the number of items.

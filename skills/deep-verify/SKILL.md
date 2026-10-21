@@ -1,6 +1,6 @@
 ---
 name: deep-verify
-description: Rigorous, multi-agent technical verification of claims about code. Use whenever the user wants to verify, validate, double-check, audit, confirm, fact-check, or "be sure about" something in a codebase, and wants a thorough, accurate, evidence-backed answer. Triggers include "verify that...", "is it true that...", "make sure X actually works/doesn't happen", "double-check this", "confirm whether...", "thoroughly check", "spin up agents to verify", or any request where a wrong or shallow answer would be costly. Use it even if the user does not say "agents" or "skill". Do NOT use for simple lookups ("where is function X defined?") or open-ended exploration with no specific claim to test.
+description: Rigorous, multi-agent, evidence-backed verification of specific claims about code. Use when the user wants something in a codebase verified, confirmed or double-checked and a wrong answer would be costly; not for simple lookups or open-ended exploration with no specific claim to test.
 ---
 
 # Deep Verify
