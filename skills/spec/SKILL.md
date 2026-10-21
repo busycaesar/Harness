@@ -10,13 +10,13 @@ Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave) i
 
 ## The one rule: never assume
 
-Every statement in the spec must trace back to exactly one of:
+Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Every statement in the spec must trace back to exactly one of:
 
 1. **Source requirements**: what the user wrote.
 2. **Codebase facts**: something that exists in the code, cited with `path:line`.
 3. **Decisions**: an answer the user gave to a question you asked.
 
-If a statement cannot be traced to one of these, it does not go in the spec's requirements. It becomes an open question that you ask the user. Do not fill gaps with "reasonable defaults", "common practice", or "probably". If the user explicitly delegates a choice ("you decide"), record your choice and reasoning as a Decision and tell them what you chose.
+If a statement cannot be traced to one of these, it does not go in the spec's requirements. It becomes an open question that you ask the user. A choice the user explicitly delegates is recorded, with its reasoning, as a Decision.
 
 ## Step 1: Set up the spec file
 

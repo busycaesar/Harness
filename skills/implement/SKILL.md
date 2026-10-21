@@ -16,7 +16,7 @@ Implement what `$ARGUMENTS` (or the user's message) asks for. The job is done wh
 
 ## The one rule: never assume
 
-Where the requirements, the codebase and the user's answers do not settle something, ask the user. Do not fill gaps with defaults or "probably". If the user explicitly delegates a choice, make it and tell them what you chose.
+Follow the never-assume rule in `.claude/rules/harness/never-assume.md`.
 
 ## Step 1: Identify the input
 

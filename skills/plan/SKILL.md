@@ -12,7 +12,7 @@ The requirements can be in any form: a prompt, a ticket body, a document or a fi
 
 ## The one rule: never assume
 
-Every task and decision in the plan must trace back to the requirements, the codebase, or an answer from the user. Where the requirements are unclear in a way that changes the plan, ask; do not guess.
+Follow the never-assume rule in `.claude/rules/harness/never-assume.md` for every task and decision in the plan. Where the requirements are unclear in a way that changes the plan, ask; do not guess.
 
 ## Step 1: Set up the plan file
 
