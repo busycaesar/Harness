@@ -13,7 +13,6 @@ Harness is a reusable, self-improving [Claude Code](https://claude.com/claude-co
 
 ## Features
 
-- **`/dev`**: takes requirements from a prompt, ticket or file through `spec`, `plan` and `implement` to working changes, then checks them against the clean-code rules.
 - **`/skill-improve`** (this repo only): scores the harness skills, learns from similar skills elsewhere and keeps only the changes that raise the score.
 
 ## Skills and commands
