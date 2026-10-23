@@ -12,13 +12,15 @@ Report only: changes no file except the report. No git state changes.
 
 ## Never assume
 
-Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Every finding traces to a specific principle in the rules folder; check no other rules. If it is unclear whether code breaks a principle, do not flag it.
+Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Every finding traces to a specific principle in a rule file read in Step 1; check no other rules. If it is unclear whether code breaks a principle, do not flag it.
 
 ## Step 1: Settings
 
 1. Read the `clean-code` path from `.claude/config/paths.yaml`. If the file or key is missing, use `clean-code-report.md` at the project root. An existing report at that path is replaced.
 2. Read `max_parallel_tasks` from `.claude/config/settings.yaml`. If missing, use 4.
-3. Read the `clean-code-rules` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/rules/harness/clean-code/`. This is the rules folder; read every file in it. If it is missing or has no rule files, say so and stop.
+3. Read the `clean-code-rules` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/rules/harness/clean-code/`. This is the rules folder; read every file in it.
+4. Read the `project-rules` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/rules/project/`. If it exists, read every rule file under it, including its `conventions/` and `clean-code/` folders. Where a project rule conflicts with a rules-folder principle, the project rule wins: check against the project rule, not the other.
+5. If neither holds a rule file, say so and stop.
 
 ## Step 2: Find the code to check
 
@@ -84,7 +86,7 @@ Files checked: <n>
 - [<path>:<line>](<link>#L<line>) · **<principle>** (<rule file>): <what is wrong>. Fix: <suggested fix>.
 ```
 
-- The summary has one row per file in the rules folder, named by its file name without `.md`, including those with no findings.
+- The summary has one row per rule file read in Step 1, including those with no findings: a rules-folder file by its name without `.md`, a project rule file by its path under the project rules folder without `.md` (e.g. `conventions/naming`).
 - One `###` section per file with findings, in path order; findings in line order.
 - `<path>` is relative to the project root. `<link>` is the same file relative to the report's folder, so the link opens from a Markdown preview.
 - No severity levels.
