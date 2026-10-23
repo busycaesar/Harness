@@ -10,7 +10,6 @@ Implement what `$ARGUMENTS` (or the user's message) asks for. The job is done wh
 
 ## Scope
 
-- **Change files. Nothing else.** Do not stage, commit, stash, branch, reset, check out or run any other git operation that changes repository state. Read-only git commands (`git status`, `git diff`, `git log`) are fine.
 - Change only what the requirements need. No unrelated refactors, renames or clean-ups.
 - Do not edit the requirements, spec or plan you were given.
 
