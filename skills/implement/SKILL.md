@@ -1,21 +1,19 @@
 ---
 name: implement
-description: Implement technical requirements — a prompt, ticket body, spec or plan — by changing the project's files until every requirement is proven met. Always builds a verification checklist from the requirements first, then implements and ticks each item off with evidence. Changes files only; never stages, commits or runs other git operations.
-argument-hint: <requirements text, or path to a requirements, spec or plan file>
+description: Implement technical requirements — a prompt, ticket body, spec or plan — by changing the project's files until every requirement is proven met, or fix a given list of findings in existing code. Builds a verification checklist from the requirements first, then implements and ticks each item off with evidence. Use when code must change to meet stated requirements or fix stated findings; with neither given, it changes nothing.
+argument-hint: <requirements text, or path to a requirements, spec, plan or findings file>
 ---
 
 # Implement: Requirements → Working Changes
 
 Implement what `$ARGUMENTS` (or the user's message) asks for. The job is done when every item on the verification checklist is ticked with evidence, not when the code looks finished.
 
-## Scope
+## Rules
 
-- Change only what the requirements need. No unrelated refactors, renames or clean-ups.
+- Follow the never-assume rule in `.claude/rules/harness/never-assume.md`, before and during the work: when something is unclear mid-way, stop and ask.
+- Change only what the requirements need. No unrelated refactors, renames or clean-ups. Failures or problems that exist outside the change are reported, not fixed.
+- Add no dependency the requirements or plan do not name. If one seems needed, or a named one cannot be installed, ask the user; never substitute a similar one.
 - Do not edit the requirements, spec or plan you were given.
-
-## The one rule: never assume
-
-Follow the never-assume rule in `.claude/rules/harness/never-assume.md`.
 
 ## Step 1: Identify the input
 
@@ -24,6 +22,8 @@ The input is one of:
 - **Requirements**: a prompt, ticket body, spec or requirements file.
 - **A plan**: a document of tasks grouped into waves, which points to its source requirements (a `Requirements:` line, or the requirements pasted inside it).
 - **Findings**: a list of problems in existing code, each with a rule, a `path:line` and what is wrong, optionally with the work item folder it belongs to.
+
+If the input is empty or holds none of these, stop and report that nothing was given. Change nothing.
 
 If it is a plan, find its source requirements. If a plan does not say where its requirements are, ask the user.
 
@@ -57,8 +57,9 @@ Before changing anything, read the code the change touches: where it lands, the 
    - the requirements and checklist items it covers, quoted in full;
    - the patterns it must follow, and the project's rules in `.claude/rules/`;
    - how to build: the units exactly as named and signed, writing their bodies, private helpers and error handling itself;
-   - these limits: edit only the files the task lists; if another file must change, or a unit another task uses must change, stop and report back instead; report any other change to a unit; no git operations; do not tick checklist items.
-4. When the wave finishes, confirm each task's "Done when" yourself. Fix or re-run any task that fell short before moving on.
+   - these limits: edit only the files the task lists; if another file must change, or a unit another task uses must change, stop and report back instead; report any other change to a unit; launch no subagents; no git operations; do not tick checklist items;
+   - the report to return: a status of `done`, `blocked` or `needs context`, the files changed, and any concerns or what is missing.
+4. When the wave finishes, treat each report as a claim: read the changed files and confirm each task's "Done when" yourself. For `blocked` or `needs context`, supply what is missing from the codebase or the user, then re-run the task; never re-run it unchanged. Fix or re-run any task that fell short before moving on.
 5. If the plan turns out to be wrong (a file is not where it says, a dependency is missing), adapt the work to the codebase and note the deviation for the final report. If the deviation changes behaviour the requirements describe, ask the user. A planned unit that proves wrong may be fixed locally and reported; if the fix changes a unit another task uses, ask the user first.
 
 ### Without a plan
@@ -67,8 +68,7 @@ Implement the requirements in whatever order the code calls for: shared pieces f
 
 ### Either way
 
-- Write the tests the checklist's proofs call for, alongside the code, following the project's test conventions.
-- When something is unclear mid-way, stop and ask the user. Do not guess and continue.
+Write the tests the checklist's proofs call for, alongside the code, following the project's test conventions.
 
 ## Step 5: Prove every item
 
@@ -77,6 +77,7 @@ Go through the checklist item by item:
 1. Carry out the item's proof: run the named test or command, check the behaviour, or inspect the code.
 2. If it passes, record the evidence and tick it.
 3. If it fails, fix the implementation and run the proof again. Never make a proof pass by weakening it: no skipped or deleted tests, no loosened assertions, no mocking away the thing under test.
+4. If the same item still fails after three fix attempts, stop fixing it: treat it as an item that cannot be met (see "Checklist rules") and move on.
 
 Run only what the proofs need. Running the project's full test suite, build or lint is outside this skill's scope.
 
@@ -88,11 +89,18 @@ Repeat until every item is ticked, or the only unticked items are ones that cann
 2. If the work item has a `checklist.md`, re-run every item's proof afterwards. If a fix breaks a proof or a requirement, undo it and leave that finding unfixed. Never weaken a proof.
 3. Report the files changed, the findings fixed, any finding left unfixed with why, and each proof's result.
 
-## Step 6: Report
+## Step 6: Self-check, then report
+
+Before reporting, confirm and fix any miss:
+
+- every ticked item has recorded evidence from its proof;
+- every changed file traces to a requirement, a plan task or a finding;
+- the changed code holds no placeholder, stub or `TODO` that leaves a requirement unmet;
+- no test or assertion was skipped, deleted or loosened.
 
 Report:
 
 - the files changed, created or deleted;
 - the checklist path and how many items are ticked out of the total;
 - any items that could not be met, and why;
-- any deviations from the plan, and the decisions the user made along the way.
+- any deviations from the plan, problems found outside the change, and the decisions the user made along the way.

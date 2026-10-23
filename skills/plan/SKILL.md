@@ -1,14 +1,12 @@
 ---
 name: plan
-description: Plan how to implement technical requirements — a feature, change, ticket body, prompt or requirements file. Researches the codebase in depth, settles the technical approach, and writes a plan of file-specific tasks grouped into waves, where tasks in the same wave can run in parallel. Produces a plan document only; never writes code.
+description: Plan how to implement technical requirements that already exist — a feature, change, ticket body, prompt or requirements file. Researches the codebase in depth, settles the technical approach, and writes a plan of file-specific tasks grouped into waves, where tasks in the same wave can run in parallel. Use when the what is known and the how is needed; not for deciding what to build, and not for making the change itself. Produces a plan document only; never writes code.
 argument-hint: <requirements text or path to a requirements file>
 ---
 
 # Plan: Requirements → Implementation Plan
 
-Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave) into a plan that can be carried out without making any further decisions. The plan says **how**: which files change, the shape of the code in them, in what order, and which work can run in parallel. Write no code.
-
-The requirements can be in any form: a prompt, a ticket body, a document or a file.
+Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave), in any form, into a plan that can be carried out without making any further decisions. The plan says **how**: which files change, the shape of the code in them, in what order, and which work can run in parallel. Write no code. If no requirements are given, ask for them and stop until they are.
 
 ## The one rule: never assume
 
@@ -20,15 +18,15 @@ Follow the never-assume rule in `.claude/rules/harness/never-assume.md` for ever
 2. Pick the change folder:
    - If the requirements are a file already inside `<work-items>/<slug>/`, use that folder.
    - Otherwise choose a short kebab-case slug from the requirements' title or subject. If there is a ticket key, prefix it: `ABC-123-archive-jobs`.
-3. The plan file is `<work-items>/<slug>/plan.md`. If it already exists, ask the user whether to update it or create a new one. Do not overwrite.
+3. The plan file is `<work-items>/<slug>/plan.md`. If it already exists, ask the user whether to update it in place, keeping its task and decision IDs, or plan under a new slug they name. Do not overwrite without that answer.
 4. Read `max_parallel_tasks` from `.claude/config/settings.yaml`. If missing, use 4.
 
 ## Step 2: Understand the requirements
 
 1. Read the requirements in full.
 2. List them as numbered requirements. If the source already numbers them (`R1`, `R1.AC1`, …), reuse those IDs exactly. Otherwise assign `R1`, `R2`, … in the order they appear.
-3. Look for gaps that **block planning**: behaviour you cannot plan without knowing, contradictions, undefined terms. Check the codebase first; ask the user only what it does not answer.
-4. If the gaps are so many that most of the plan would be guesswork, tell the user the requirements are too ambiguous to plan, list the gaps, and stop.
+3. Look for gaps that **block planning**: behaviour you cannot plan without knowing, contradictions, undefined terms. Check the codebase first; ask the user only what it does not answer, all such gaps in one round.
+4. If a blocking gap stays unanswered, write no plan: report the open gaps and stop.
 
 ## Step 3: Research the codebase in depth
 
@@ -39,9 +37,9 @@ For every requirement, find out:
 - **Call sites and imports**: who uses the code that will change. This sets the order of the work and reveals knock-on changes.
 - **Where new files belong**: next to their closest existing equivalent.
 - **Tests**: where tests live and how they are written.
-- **Project commands**: build, test and lint or type-check commands. Read the `project-commands` path from `.claude/config/paths.yaml` (if the key is missing, use `.claude/config/project-commands.yaml`) and take them from that file. Derive any it lacks, or all if it does not exist, from the project's rules, manifests such as `package.json` or `Makefile`, or CI config.
+- **Project commands**: build, test and lint or type-check commands. Read the `project-commands` path from `.claude/config/paths.yaml` (if the key is missing, use `.claude/config/project-commands.yaml`) and take them from that file. Derive any it lacks, or all if it does not exist, from the project's rules, build manifests or CI config.
 
-Record what matters under "Codebase context", each item with a `path:line` reference.
+Stop researching a requirement once each item above is confirmed for it. Record what matters under "Codebase context", each item with a `path:line` reference.
 
 ## Step 4: Settle the approach
 
@@ -83,11 +81,12 @@ Fix the plan until every item holds:
 - [ ] Every file a task names was confirmed in the codebase, or is marked `(create)`.
 - [ ] No dependency cycles. No task depends on a task in the same or a later wave.
 - [ ] No two tasks in a wave share a file, and no wave exceeds `max_parallel_tasks`.
-- [ ] Every task has a checkable "Done when".
+- [ ] Every task has a checkable "Done when" that names the command or check that proves it.
+- [ ] No line defers, stubs or shrinks a requirement ("placeholder", "for now", "v1"), and no line decides nothing ("TBD", "handle edge cases", "add validation as needed").
 - [ ] The design follows `.claude/rules/`.
-- [ ] Every unit another task uses has an exact name and signature.
+- [ ] Every unit another task uses has one exact name and signature, spelled the same in every task.
 - [ ] Every decision says why, and who decided.
 
 ## Step 8: Save and report
 
-Write the plan from [plan-template.md](plan-template.md) to `<work-items>/<slug>/plan.md`. Report the path, the number of tasks and waves, and any decisions the user made. Nothing else is produced: no code.
+Write the plan from [plan-template.md](plan-template.md) to `<work-items>/<slug>/plan.md`. Report the path, the number of tasks and waves, and any decisions the user made.

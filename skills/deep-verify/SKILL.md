@@ -1,11 +1,11 @@
 ---
 name: deep-verify
-description: Rigorous, multi-agent, evidence-backed verification of specific claims about code. Use when the user wants something in a codebase verified, confirmed or double-checked and a wrong answer would be costly; not for simple lookups or open-ended exploration with no specific claim to test.
+description: Rigorous, multi-agent, evidence-backed verification of specific claims about code, ending in a verdict per claim (confirmed, refuted, partially true, unverifiable) with file:line and executed evidence. Use when the user wants a statement about a codebase verified, confirmed or double-checked and a wrong answer would be costly. Not for simple lookups, open-ended exploration or bug hunting with no specific claim to test, reviewing a diff, or ticking off a requirements list.
 ---
 
 # Deep Verify
 
-Verify claims about code with the rigor of a code audit. The goal is a **correct** answer with **evidence**, not a fast or agreeable one. Several independent agents investigate in parallel, each trying to *disprove* its claim, and a final skeptical pass challenges the results before anything is reported.
+Verify claims about code with the rigor of a code audit. Several independent agents investigate in parallel, each trying to *disprove* its claim, and a final skeptical pass challenges the results before anything is reported.
 
 ## Core principles
 
@@ -22,6 +22,7 @@ Verify claims about code with the rigor of a code audit. The goal is a **correct
 
 Before spawning anything:
 
+- If the request names nothing specific to verify, stop and ask the user what claim to test.
 - Restate what the user wants verified in precise terms. If a claim is ambiguous in a way that changes the answer (e.g. "thread-safe" under what usage? "handles errors" which errors?), pick the most reasonable interpretation, state it explicitly, and flag it in the final report. Only stop to ask the user if the ambiguity makes the whole task meaningless.
 - Split compound statements into **atomic, falsifiable claims**. "The cache is invalidated correctly on update and delete" is two claims. "Auth is enforced on all admin routes" is one claim that needs an enumeration of routes first.
 - For each claim, write down:
@@ -62,6 +63,8 @@ Method:
    command) and record the real output. Do not modify tracked source files; put any
    scratch scripts in a temp directory and clean up.
 5. Check for existing tests: do they actually cover the claim, or merely appear to?
+   A test proves coverage only if it fails when the behaviour is broken; show that
+   in a scratch copy, never in the working tree.
 
 Do not speculate beyond what you observed. If you cannot determine something, say
 so and say what blocked you.
@@ -78,16 +81,18 @@ CAVEATS: assumptions, environment dependencies, things that could change the ans
 
 ### Step 3: Collect and sanity-check the reports
 
-For each report, before accepting it:
+If an investigator returns nothing or ignores the format, re-run it once; if it fails again, mark the claim UNVERIFIABLE and say why.
 
-- Does the evidence actually support the verdict? Open the cited lines yourself for any high-stakes or surprising conclusion.
+Never accept a report on trust. For each one:
+
+- Does the evidence actually support the verdict? For every CONFIRMED or REFUTED verdict, open at least its strongest cited evidence yourself.
 - Is the verdict "CONFIRMED" resting only on static reading? Downgrade confidence or run the check.
 - Did the investigator enumerate or sample? A confirmation based on sampling is only a partial confirmation.
 - Do reports contradict each other or the user's premise? Resolve it rather than averaging it.
 
 ### Step 4: Adversarial review pass
 
-For every CONFIRMED or PARTIALLY TRUE verdict that matters to the user's decision, spawn a fresh **skeptic agent** (independent of the original investigator). Give it the claim and the investigator's evidence, and instruct:
+For every CONFIRMED or PARTIALLY TRUE verdict, spawn a fresh **skeptic agent** (independent of the original investigator). Give it the claim and the investigator's evidence, and instruct:
 
 ```
 Another agent concluded this claim is [verdict] based on the evidence below. Assume
@@ -97,7 +102,7 @@ misread of the code. Re-check the cited evidence independently. Report either a
 concrete counterexample, or "no flaw found" along with what you checked.
 ```
 
-If a skeptic finds a real flaw, update the verdict (and re-investigate if needed). Skip this pass only for trivial claims, and say you skipped it.
+If a skeptic finds a real flaw, update the verdict (and re-investigate if needed). Skip this pass only for a trivial claim (settled by reading one cited location, with no runtime path, config or version to trace), and say you skipped it.
 
 ### Step 5: Synthesize
 
@@ -111,6 +116,16 @@ Produce the final report in this structure:
 6. **Method:** how many agents, what was executed vs. read statically, whether the skeptic pass ran.
 
 Keep it tight. Do not pad confirmations with narrative; do not bury a refutation.
+
+If the run stops before investigating, report only what was asked, why it stopped, and what is needed to continue.
+
+Before reporting, check that:
+
+- every verdict rests on evidence gathered in this run, not on a user, doc, comment or agent saying so;
+- no CONFIRMED finding uses "should", "probably" or "seems";
+- every chosen interpretation, skipped skeptic pass and static-only verdict appears under "What was not verified".
+
+Fix any failure before reporting.
 
 ## Verdict definitions
 
@@ -133,9 +148,7 @@ Keep it tight. Do not pad confirmations with narrative; do not bury a refutation
 
 ## Behavior rules
 
-- Do not edit the user's source code during verification unless explicitly asked. Scratch repro files go in a temp dir.
+- Do not edit the user's source code during verification unless explicitly asked.
 - No git state changes: no staging, committing, stashing, branching, resetting or checking out. Read-only git commands are fine.
 - Do not run destructive commands, touch production resources, or use real credentials. If verification would require that, report UNVERIFIABLE and explain, or ask.
-- Never report a claim as confirmed because the user (or a comment, or a doc) said it was true.
 - If the user's premise is wrong, say so plainly and show the evidence.
-- Match effort to stakes: a single trivial claim may need one agent and no skeptic; a security or correctness claim deserves the full process.

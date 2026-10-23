@@ -1,6 +1,6 @@
 ---
 name: architecture-design
-description: "Renderer. Turns an architecture data file into the interactive project-map HTML. It performs no analysis of its own and will not read a codebase."
+description: "Use when given an architecture data file (a file map carrying `files`, or a master carrying `sections`) and a map path, to render it as one self-contained, offline, interactive HTML map. Renders only: not for listing files, resolving imports, assigning tiers or otherwise analysing a codebase."
 user-invocable: false
 ---
 
@@ -48,21 +48,30 @@ A project too large for one view arrives as several maps: one per section, each 
 
 Each section's `url` names the map drawn for it. `imports` pairs section paths the same way it pairs files, `[importing, imported]`; `weights` gives how many file imports each pair stands for.
 
-A data file carrying `sections` is a master; one carrying `files` is an ordinary map. The data decides which sections exist and what they contain. Never infer them.
+A data file carrying `sections` is a master; one carrying `files` is an ordinary map; one carrying both or neither is rejected. The data decides which sections exist and what they contain. Never infer them.
 
 Masters nest. A section too large to draw at once arrives as a master of its own, listing its subsections, and the map above points at it exactly as it would point at a file map. Nothing here changes with depth: a master is drawn from `sections` whether it sits over a whole project or over one part of it, and the `url` on a section may lead to either kind.
 
 ## Build
 
-Run [build.sh](build.sh) from this skill's folder:
+Inputs are one or more data files, each with the map path to write it to. Follow the never-assume rule in `.claude/rules/harness/never-assume.md`: if a data file or its map path is missing, stop and ask for it.
+
+For each pair, run [build.sh](build.sh) from this skill's folder:
 
 ```
 bash <skill folder>/build.sh <data file> <map path>
 ```
 
-It substitutes the data and the embedded graph library ([cytoscape.min.js](cytoscape.min.js)) into [template.html](template.html). The result opens offline in any browser, with no server and no network.
+It checks the data, then substitutes it and the embedded graph library ([cytoscape.min.js](cytoscape.min.js)) into [template.html](template.html), creating the map's folder if needed and replacing any map already at that path. The result opens offline in any browser, with no server and no network.
 
-Never change or delete the data file.
+- **Exit non-zero:** nothing was written for that pair. Do not retry with altered data or write the HTML another way; report the error.
+- **Warnings** on stderr name references the map cannot draw (an import or entry naming something not on the map, a tier missing from `tiers`). The map is still written; pass each warning on in the report.
+
+Never change or delete a data file, and never hand-write or patch the map HTML; every map comes from `build.sh`.
+
+## Report
+
+Each map path written, in the order given; every warning, under the map it belongs to; and for each failed pair, its data file and the error. Before reporting, confirm every listed path exists and every data file is unchanged.
 
 ## Shape
 
@@ -82,7 +91,7 @@ Never change or delete the data file.
 
 ## Colour
 
-Colours are CSS custom properties on `:root`, with a dark-mode block under `prefers-color-scheme: dark`. Never hardcode a colour in the graph styles; read the token.
+UI colours are CSS custom properties on `:root`, with a dark-mode block under `prefers-color-scheme: dark`. Never hardcode one in the graph styles; read the token.
 
 | Token | Role |
 |---|---|
@@ -93,15 +102,11 @@ Colours are CSS custom properties on `:root`, with a dark-mode block under `pref
 | `--in` | What imports the hovered file |
 | `--match` | Search hits |
 
-A box takes its colour from its tier, drawn at low background opacity with a stronger border, so nesting stays legible many levels deep.
+Each top-level box takes the next colour of the template's fixed palette (root files take `--muted`); every box inside it shares that colour, drawn at low background opacity with a stronger border, so nesting stays legible many levels deep.
 
 ## Size
 
-Set in graph pixels at the top of the template, and changed there rather than inline:
-
-`DOT 14` · `FILE_H 36` · `COLLAPSED_H 36` · `GAP 20` · `PAD 14` · `LABEL_H 24` · `COLUMN_GAP 200` · `BOX_GAP 50` · `HEADER_H 60`
-
-An entry point draws 4px larger with a 3px ring and a bold label.
+Sizes are graph-pixel constants at the top of the template; change them there, never inline. An entry point draws 4px larger with a 3px ring and a bold label.
 
 ## Interaction
 
@@ -114,7 +119,7 @@ An entry point draws 4px larger with a 3px ring and a bold label.
 
 ## The master map
 
-A master is drawn in the same language as any other map, so the two read as one thing. A section takes the place of a folder box: same tier columns in the same order, same colour per tier, same packing and alternating rows, same pan, zoom and hover.
+A master is drawn in the same language as any other map, so the two read as one thing. A section takes the place of a folder box: same tier columns in the same order (a section's column comes from its `tier`), same palette, same packing and alternating rows, same pan, zoom and hover.
 
 What differs:
 
@@ -128,7 +133,7 @@ A section map is an ordinary map and needs nothing special. It holds only its ow
 
 ## Rules
 
-- Presentation only. If a change needs new facts about the codebase, it belongs in the data file, not here.
+- Presentation only. Never read the codebase to add or correct a fact; draw the data as given.
 - Draw exactly what the data says. Never infer an arrow, a tier, or a grouping the data did not provide.
 - The output stays one self-contained file: no CDN, no external stylesheet, no fetch.
 - Keep it readable at both ends of the range, a handful of files and tens of thousands.

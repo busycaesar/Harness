@@ -223,6 +223,7 @@
   var tierNames = (data.tiers || []).slice();
   var tierOf = data.tierOf || {};
   var tierOfUnit = function (path) {
+    if (isSection(path) && sectionOf[path].tier) return sectionOf[path].tier;
     var key = path === '' ? '.' : path;
     if (tierOf[key]) return tierOf[key];
     var best = null;

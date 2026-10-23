@@ -56,7 +56,7 @@ flowchart LR
   - `{name}({params}) -> {result}` — {one-sentence responsibility}
 - Depends on: —
 - Approach: {what to change and how, in a few lines; name the pattern to follow}
-- Done when: {checkable condition, including the tests this task adds passing}
+- Done when: {checkable condition and the command or check that proves it, including the tests this task adds passing}
 
 ### T2 — {short title}
 
