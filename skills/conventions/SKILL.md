@@ -1,28 +1,32 @@
 ---
+name: conventions
 description: Scan the whole project and write the conventions and clean-code practices it actually follows (naming, layout, imports, logging, tests, comments, simplicity, design, structure, readability, errors) as always-loaded rule files, each rule with how consistently it is followed and examples. Keeps hand-written rules across re-runs.
-disable-model-invocation: true
 ---
 
 # Project conventions
 
 Scan the project and write the conventions and clean-code practices it actually follows as rule files, one per topic.
 
-Reads only and runs nothing except the file listing in Step 2. Changes no file except the rule files it writes, and an earlier generated rule file with nothing left to keep. No git state changes.
+Reads only and runs nothing except the file listing in Step 2. Asks the user nothing. Changes no file except the rule files it writes, and an earlier generated rule file with nothing left to keep. No git state changes.
 
-Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Every rule traces to the code that follows it; a pattern without evidence is never written. Ask the user only about genuine gaps, such as whether a file is generated or vendored.
+Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Every rule traces to the code that follows it; a pattern without evidence is never written.
 
 ## Step 1: Settings
 
 1. Read the `project-rules` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/rules/project/`. This is the rules folder.
 2. Read `max_parallel_tasks` from `.claude/config/settings.yaml`. If missing, use 4.
-3. For every output file (the Step 4 table and `conventions/other.md`) that already exists, set aside everything after its `## Manual` heading. The command never changes that part. If an existing output file has no `## Manual` heading, ask the user whether it may be replaced.
+3. For every output file (the Step 4 table and `conventions/other.md`) that already exists, set aside everything after its `## Manual` heading. The skill never changes that part. If an existing output file has no `## Manual` heading, set aside its whole content instead; it goes under `## Manual` in the new file. Existing content is never erased.
 
 ## Step 2: List the files
 
-- In a git repository, list them with `git ls-files --cached --others --exclude-standard`, then drop any that no longer exist on disk.
-- Otherwise, list every file, skipping `.git` and everything `.gitignore` excludes.
-- Drop vendored and generated files, lockfiles and binaries. If it is unclear whether a file is generated or vendored, ask the user.
-- Drop the rules folder itself.
+1. First, run one subagent to build the skip list. It starts cold, so give it the project root, and tell it to read only and run nothing but read-only git listing commands. It returns files or folders (a folder instead of every file inside it), each with a one-line reason:
+   - everything git ignores, from `git ls-files --others --ignored --exclude-standard --directory` (it honours `.gitignore` files, `.git/info/exclude` and the global excludes file); outside git, what the `.gitignore` files exclude;
+   - from its own scan of the project, anything else that is not the project's own code: generated files (a generated or "do not edit" header, `linguist-generated` in `.gitattributes`), vendored or copied third-party code (`linguist-vendored`, a vendor folder), minified code, build-output folders, lockfiles and binaries.
+
+   Keep the skip list for the report.
+2. Then list the files, leaving out the rules folder and everything on the skip list. Pass them to the listing as exclusions so it never descends into a skipped folder:
+   - In a git repository, use `git ls-files --cached --others -- . ':(exclude)<path>'` with one exclusion per skipped path, then drop any file that no longer exists on disk.
+   - Otherwise, walk every file except `.git`, without entering a skipped folder.
 
 Paths are relative to the project root and use `/`.
 
@@ -91,4 +95,9 @@ These are this project's own rules, found in its code; where they conflict with 
 
 ## Step 6: Report
 
-Print only one line with each file written and its rule count, then the rules folder's path.
+Print only:
+
+- one line with each file written and its rule count, then the rules folder's path;
+- each existing file whose content was moved under `## Manual` because it had no such heading;
+- "N items skipped as git-ignored";
+- each other skipped file or folder with its reason.
