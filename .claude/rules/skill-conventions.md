@@ -5,14 +5,14 @@ Design decisions every harness skill in `skills/` and command in `commands/` mus
 ## Isolation
 
 - A skill never names, references or hints at another skill, or at what happens before or after it.
-- Three exceptions only: `implement` invokes `checklist`, `onboard` invokes `architecture-design`, and `dev` invokes `spec`, `plan`, `implement` and `clean-code` in that order, then `implement` again for the findings the user chooses to fix.
+- Four exceptions only: `implement` invokes `checklist`, `onboard` invokes `architecture-design`, `dev` invokes `spec`, `plan`, `implement` and `clean-code` in that order, then `implement` again for the findings the user chooses to fix, and `xray` invokes `scan-commands` and `conventions` in parallel.
 - A skill accepts its input in any reasonable form (prompt, ticket body, file) and does not care which skill, if any, produced it.
 
 ## Behaviour
 
 - **Never assume.** Skills follow the never-assume rule in `rules/harness/never-assume.md`, including its exception for choices the user explicitly delegates.
 - **No approval gates.** A skill produces its output and stops. It asks the user questions only to resolve gaps or consequential choices, not for sign-off on its own output. (Exception: `spec` asks the user to approve the final spec, because the spec is the user's statement of intent.)
-- **Each skill writes only its own output.** `spec` writes the spec, `plan` the plan, `checklist` the checklist. `implement` changes project files and ticks checklist items.
+- **Each skill writes only its own output.** `spec` writes the spec, `plan` the plan, `checklist` the checklist. `implement` changes project files and ticks checklist items. `conventions` writes only the rule files under the project rules folder and never erases their existing content.
 - **No git state changes.** No skill stages, commits, stashes, branches, resets or checks out. Read-only git commands are fine.
 - `spec` says **what**, never how. `plan` says **how**. A final spec has no open questions.
 - `checklist` covers requirements only: no build, lint or full-test-suite items. It never writes a checklist that has gaps, and never touches an existing one.
