@@ -23,6 +23,7 @@ Harness is a reusable, self-improving [Claude Code](https://claude.com/claude-co
 - **`/implement`**: Changes the project's files until every requirement is proven met against a verification checklist.
 - **`/onboard`**: Maps a project's architecture (files, imports, entry points, tiers) as an interactive HTML map.
 - **`/scan-commands`**: Finds the project's install, run, build, test and other commands and stores them in one YAML file.
+- **`/conventions`**: Finds the conventions and clean-code practices a project actually follows and writes them as rule files, keeping hand-written rules.
 - **`/clean-code`**: Checks code against the clean-code rules and writes a Markdown report; never edits code.
 - **`/deep-verify`**: Verifies claims about code rigorously with multiple agents and evidence-backed answers.
 - **`/commit`**: Suggests one commit message for the staged files; never runs git.

@@ -15,3 +15,6 @@ clean-code-rules: .claude/rules/harness/clean-code/
 
 # The project's own shell commands (install, run, build, test and more): one YAML file, refreshed on each scan.
 project-commands: .claude/config/project-commands.yaml
+
+# The project's own rules (conventions and clean-code practices found in its code): one Markdown file per topic, always loaded.
+project-rules: .claude/rules/project/
