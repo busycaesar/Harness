@@ -1,0 +1,1266 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Runbook</title>
+    <style>
+      :root {
+        --bg: #faf9f7;
+        --grid: #e6e5df;
+        --surface: #ffffff;
+        --sunk: #f2f2ee;
+        --text: #17171a;
+        --muted: #63635d;
+        --faint: #95958d;
+        --line: #e2e1db;
+        --edge: #b5b4ab;
+        --svc: #2f6ae0;
+        --svc-soft: #e9f0fd;
+        --task: #7a5fc0;
+        --gate: #94620d;
+        --gate-soft: #fbf2e1;
+        --stop: #ad2f2c;
+        --stop-soft: #fdeceb;
+        --ok: #2d7a4b;
+        --shadow: 0 4px 16px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.05);
+        --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.16);
+        --mono:
+          ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121215;
+          --grid: #232329;
+          --surface: #1c1c21;
+          --sunk: #26262c;
+          --text: #ecebe6;
+          --muted: #a4a49c;
+          --faint: #76766e;
+          --line: #33333c;
+          --edge: #4d4d58;
+          --svc: #7ba6f9;
+          --svc-soft: #1a2435;
+          --task: #ab96ea;
+          --gate: #e0b263;
+          --gate-soft: #322714;
+          --stop: #f0908c;
+          --stop-soft: #371f20;
+          --ok: #84c79a;
+          --shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+          --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.6);
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Inter,
+          system-ui,
+          sans-serif;
+      }
+
+      /* ---------- full-bleed canvas ---------- */
+      #viewport {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        cursor: grab;
+        background: radial-gradient(
+            circle at 1px 1px,
+            var(--grid) 1.4px,
+            transparent 0
+          )
+          0 0 / 26px 26px;
+      }
+      #viewport.drag {
+        cursor: grabbing;
+      }
+      #canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: 0 0;
+      }
+      svg.edges {
+        position: absolute;
+        inset: 0;
+        overflow: visible;
+        pointer-events: none;
+      }
+      svg.edges path {
+        fill: none;
+        stroke: var(--edge);
+        stroke-width: 1.9;
+      }
+      svg.edges path.stop {
+        stroke-dasharray: 5 5;
+      }
+      svg.edges path.hot {
+        stroke: var(--svc);
+        stroke-width: 2.8;
+      }
+      svg.edges .lbl {
+        font:
+          600 10.5px -apple-system,
+          system-ui,
+          sans-serif;
+        fill: var(--gate);
+        paint-order: stroke;
+        stroke: var(--bg);
+        stroke-width: 4.5px;
+        stroke-linejoin: round;
+      }
+
+      .node {
+        position: absolute;
+        width: 268px;
+        background: var(--surface);
+        border: 1.5px solid var(--line);
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition:
+          transform 0.14s ease,
+          box-shadow 0.14s ease,
+          border-color 0.14s ease;
+      }
+      .node:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+      .node::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+      }
+      .node.svc::before {
+        background: var(--svc);
+      }
+      .node.task::before {
+        background: var(--task);
+      }
+      .node.stop::before {
+        background: var(--stop);
+      }
+      .node.stop {
+        border-style: dashed;
+      }
+      .node.sel {
+        border-color: var(--svc);
+        box-shadow:
+          0 0 0 3px var(--svc-soft),
+          var(--shadow-lg);
+      }
+
+      .n-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 13px 0 16px;
+      }
+      .idx {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        flex: none;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10.5px;
+        font-weight: 700;
+      }
+      .svc .idx {
+        background: var(--svc);
+      }
+      .task .idx {
+        background: var(--task);
+      }
+      .stop .idx {
+        background: var(--stop);
+      }
+      .n-top h3 {
+        font-size: 14.5px;
+        margin: 0;
+        font-weight: 620;
+        letter-spacing: -0.01em;
+      }
+      .n-cmd {
+        margin: 9px 13px 0 16px;
+        padding: 7px 9px;
+        border-radius: 7px;
+        background: var(--sunk);
+        font-family: var(--mono);
+        font-size: 11.5px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 56px;
+        overflow: hidden;
+      }
+      .n-cmd::before {
+        content: "$ ";
+        color: var(--faint);
+      }
+      .n-foot {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 9px 13px 11px 16px;
+      }
+      .chip {
+        font-family: var(--mono);
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: var(--sunk);
+        border: 1px solid var(--line);
+        color: var(--muted);
+      }
+      .chip.flag {
+        font-family: inherit;
+        background: var(--gate-soft);
+        border-color: transparent;
+        color: var(--gate);
+        font-weight: 620;
+      }
+      .chip.clash {
+        font-family: inherit;
+        background: var(--stop-soft);
+        border-color: transparent;
+        color: var(--stop);
+        font-weight: 620;
+      }
+
+      /* ---------- floating chrome ---------- */
+      .float {
+        position: fixed;
+        z-index: 10;
+      }
+      #brand {
+        top: 20px;
+        left: 22px;
+        pointer-events: none;
+      }
+      #brand h1 {
+        margin: 0;
+        font-size: 19px;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+      }
+      #brand p {
+        margin: 1px 0 0;
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+
+      #tools {
+        top: 18px;
+        right: 22px;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 5px;
+        box-shadow: var(--shadow);
+      }
+      #tools button {
+        font: inherit;
+        font-size: 12.5px;
+        padding: 5px 11px;
+        cursor: pointer;
+        white-space: nowrap;
+        background: none;
+        color: var(--text);
+        border: 0;
+        border-radius: 6px;
+      }
+      #tools button:hover {
+        background: var(--sunk);
+      }
+      #tools button.on {
+        background: var(--svc);
+        color: #fff;
+      }
+      #tools .div {
+        width: 1px;
+        align-self: stretch;
+        background: var(--line);
+        margin: 2px 2px;
+      }
+      #tools .badge {
+        display: inline-block;
+        min-width: 16px;
+        padding: 0 4px;
+        margin-left: 5px;
+        border-radius: 8px;
+        background: var(--gate-soft);
+        color: var(--gate);
+        font-size: 10.5px;
+        font-weight: 700;
+        line-height: 16px;
+        text-align: center;
+      }
+      #tools button.on .badge {
+        background: rgba(255, 255, 255, 0.25);
+        color: #fff;
+      }
+
+      #legend {
+        bottom: 18px;
+        left: 22px;
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 7px 12px;
+        box-shadow: var(--shadow);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      #legend i {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+        display: inline-block;
+        margin-right: 5px;
+        vertical-align: -1px;
+      }
+      #legend i.svc {
+        background: var(--svc);
+      }
+      #legend i.task {
+        background: var(--task);
+      }
+      #legend i.stop {
+        background: var(--stop);
+      }
+      #hint {
+        bottom: 18px;
+        right: 22px;
+        font-size: 12px;
+        color: var(--faint);
+        pointer-events: none;
+      }
+
+      /* ---------- drawer ---------- */
+      #drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 420px;
+        max-width: 92vw;
+        z-index: 20;
+        background: var(--surface);
+        border-left: 1px solid var(--line);
+        box-shadow: var(--shadow-lg);
+        transform: translateX(100%);
+        transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+        padding: 22px 24px 40px;
+      }
+      #drawer.open {
+        transform: none;
+      }
+      #drawer .close {
+        position: absolute;
+        top: 15px;
+        right: 16px;
+        cursor: pointer;
+        font-size: 19px;
+        line-height: 1;
+        background: none;
+        border: 0;
+        color: var(--faint);
+        padding: 4px 7px;
+        border-radius: 6px;
+      }
+      #drawer .close:hover {
+        background: var(--sunk);
+        color: var(--text);
+      }
+      #drawer h2 {
+        margin: 0 0 3px;
+        font-size: 19px;
+        font-weight: 650;
+        letter-spacing: -0.015em;
+        padding-right: 30px;
+      }
+      #drawer .where {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--faint);
+        margin: 0 0 15px;
+      }
+      #drawer pre {
+        margin: 0 0 9px;
+        padding: 11px 13px;
+        border-radius: 8px;
+        background: var(--sunk);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        gap: 3px 12px;
+        padding: 9px 0;
+        border-top: 1px solid var(--line);
+        font-size: 13.5px;
+      }
+      .row .k {
+        color: var(--faint);
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 660;
+        padding-top: 2px;
+      }
+      .banner {
+        margin: 0 0 14px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+      .banner.warn {
+        background: var(--gate-soft);
+        color: var(--gate);
+      }
+      .banner.bad {
+        background: var(--stop-soft);
+        color: var(--stop);
+      }
+      .fx {
+        padding-bottom: 7px;
+      }
+      .fx .s {
+        font-weight: 620;
+      }
+      .fx .f {
+        color: var(--muted);
+      }
+      button.copy {
+        font: inherit;
+        font-size: 11.5px;
+        cursor: pointer;
+        background: none;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 4px 11px;
+        color: var(--muted);
+      }
+      button.copy:hover {
+        border-color: var(--muted);
+        color: var(--text);
+      }
+      button.copy.done {
+        color: var(--ok);
+        border-color: var(--ok);
+      }
+      .port {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        background: var(--sunk);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1px 5px;
+      }
+      .gapitem {
+        padding: 11px 0;
+        border-top: 1px solid var(--line);
+      }
+      .gapitem h3 {
+        margin: 0 0 3px;
+        font-size: 14px;
+        font-weight: 620;
+      }
+      .gapitem p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      #drawer table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      #drawer th {
+        text-align: left;
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--faint);
+        font-weight: 650;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      #drawer td {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      @media (max-width: 640px) {
+        #brand h1 {
+          font-size: 16px;
+        }
+        #brand p {
+          display: none;
+        }
+        #tools {
+          top: auto;
+          bottom: 18px;
+          right: 14px;
+          left: 14px;
+          justify-content: center;
+        }
+        #legend,
+        #hint {
+          display: none;
+        }
+      }
+
+      /* Printing a pannable canvas crops it, so print the ordered list instead. */
+      #printable {
+        display: none;
+      }
+      @media print {
+        html,
+        body {
+          overflow: visible;
+          height: auto;
+        }
+        #viewport,
+        .float,
+        #drawer {
+          display: none !important;
+        }
+        #printable {
+          display: block;
+          padding: 0;
+        }
+        #printable h1 {
+          font-size: 21px;
+          margin: 0 0 2px;
+        }
+        #printable .sub {
+          color: #444;
+          font-size: 13px;
+          margin: 0 0 18px;
+        }
+        #printable h2 {
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.09em;
+          color: #555;
+          border-bottom: 1px solid #bbb;
+          padding-bottom: 5px;
+          margin: 22px 0 10px;
+        }
+        #printable .s {
+          border-top: 1px solid #ddd;
+          padding: 9px 0;
+          break-inside: avoid;
+        }
+        #printable .s h3 {
+          margin: 0 0 4px;
+          font-size: 14.5px;
+        }
+        #printable pre {
+          margin: 0 0 5px;
+          padding: 7px 9px;
+          background: #f4f4f2;
+          font-family: var(--mono);
+          font-size: 12px;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+        #printable p {
+          margin: 0 0 3px;
+          font-size: 12.5px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="viewport">
+      <div id="canvas"><svg class="edges" id="edges"></svg></div>
+    </div>
+
+    <div class="float" id="brand">
+      <h1 id="title">Runbook</h1>
+      <p id="tagline"></p>
+    </div>
+
+    <div class="float" id="tools">
+      <button id="fit">Fit</button>
+      <button id="zin">+</button>
+      <button id="zout">&minus;</button>
+      <span class="div"></span>
+      <button id="bPorts">Ports</button>
+      <button id="bGaps">
+        Unresolved<span class="badge" id="gapN">0</span>
+      </button>
+    </div>
+
+    <div class="float" id="legend">
+      <span><i class="svc"></i>keeps running</span>
+      <span><i class="task"></i>runs and exits</span>
+      <span><i class="stop"></i>teardown</span>
+    </div>
+    <div class="float" id="hint">drag to pan · click a box for detail</div>
+
+    <aside id="drawer">
+      <button class="close" id="dClose">&times;</button>
+      <div id="dBody"></div>
+    </aside>
+
+    <div id="printable"></div>
+
+    <script id="data" type="application/json">
+      /*@@DATA@@*/
+    </script>
+    <script>
+      (function () {
+        var data = JSON.parse(document.getElementById("data").textContent);
+        var steps = (data.steps || []).slice();
+        var teardown = data.teardown || [];
+        var gaps = data.unresolved || [];
+        var esc = function (s) {
+          return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+          });
+        };
+
+        document.getElementById("title").textContent =
+          (data.project || "Project") + " — running it locally";
+
+        var byId = {};
+        steps.forEach(function (s) {
+          byId[s.id] = s;
+        });
+
+        // Teardown joins the graph as its own column: it is part of the flow, not an appendix.
+        var tdNodes = teardown.map(function (t, i) {
+          return {
+            id: "__td" + i,
+            title: t.destroys ? "Tear down and wipe" : "Tear down",
+            command: t.command,
+            kind: "stop",
+            starts: [],
+            needs: [],
+            _td: t,
+          };
+        });
+
+        var depth = {},
+          guard = 0;
+        (function () {
+          var d = function (s) {
+            if (depth[s.id] != null) return depth[s.id];
+            if (guard++ > 5000) return 0;
+            var v = 0;
+            (s.needs || []).forEach(function (n) {
+              if (byId[n]) v = Math.max(v, d(byId[n]) + 1);
+            });
+            return (depth[s.id] = v);
+          };
+          steps.forEach(d);
+        })();
+        var lastCol = steps.length
+          ? Math.max.apply(
+              null,
+              steps.map(function (s) {
+                return depth[s.id];
+              }),
+            )
+          : -1;
+        tdNodes.forEach(function (n) {
+          depth[n.id] = lastCol + 1;
+          byId[n.id] = n;
+        });
+
+        var all = steps.concat(tdNodes);
+        var cols = [];
+        all.forEach(function (s) {
+          (cols[depth[s.id]] = cols[depth[s.id]] || []).push(s);
+        });
+        cols = cols.filter(Boolean);
+
+        // Ports, computed first so a clash can be marked on the node that causes it.
+        var portRows = [],
+          portSeen = {},
+          clash = {};
+        steps.forEach(function (s) {
+          (s.starts || []).forEach(function (p) {
+            if (!p.port) return;
+            if (portSeen[p.port]) clash[p.port] = true;
+            portSeen[p.port] = true;
+            portRows.push({ port: p.port, name: p.name, step: s.title });
+          });
+        });
+        portRows.sort(function (a, b) {
+          return a.port - b.port;
+        });
+
+        var NW = 268,
+          GAP_X = 108,
+          GAP_Y = 26,
+          PAD = 46;
+        var canvas = document.getElementById("canvas"),
+          svg = document.getElementById("edges");
+        var n = 0;
+        cols.forEach(function (c) {
+          c.forEach(function (s) {
+            s._n = s.kind === "stop" ? "×" : ++n;
+          });
+        });
+
+        canvas.insertAdjacentHTML(
+          "beforeend",
+          all
+            .map(function (s) {
+              var chips = (s.starts || [])
+                .filter(function (p) {
+                  return p.port;
+                })
+                .map(function (p) {
+                  return (
+                    '<span class="chip' +
+                    (clash[p.port] ? " clash" : "") +
+                    '">:' +
+                    esc(p.port) +
+                    "</span>"
+                  );
+                });
+              if (s.terminal === "own")
+                chips.push('<span class="chip flag">own terminal</span>');
+              if (s.unverified)
+                chips.push('<span class="chip flag">unverified</span>');
+              if (s._td && s._td.destroys)
+                chips.push('<span class="chip clash">destroys data</span>');
+              return (
+                '<div class="node ' +
+                (s.kind === "task"
+                  ? "task"
+                  : s.kind === "stop"
+                    ? "stop"
+                    : "svc") +
+                '" data-id="' +
+                esc(s.id) +
+                '">' +
+                '<div class="n-top"><span class="idx">' +
+                s._n +
+                "</span><h3>" +
+                esc(s.title) +
+                "</h3></div>" +
+                '<div class="n-cmd">' +
+                esc(s.command) +
+                "</div>" +
+                (chips.length
+                  ? '<div class="n-foot">' + chips.join("") + "</div>"
+                  : '<div style="height:11px"></div>') +
+                "</div>"
+              );
+            })
+            .join(""),
+        );
+
+        var els = {};
+        canvas.querySelectorAll(".node").forEach(function (e) {
+          els[e.dataset.id] = e;
+        });
+        var pos = {};
+        var colH = cols.map(function (c) {
+          return (
+            c.reduce(function (a, s) {
+              return a + els[s.id].offsetHeight;
+            }, 0) +
+            GAP_Y * (c.length - 1)
+          );
+        });
+        var maxH = Math.max.apply(null, colH);
+        cols.forEach(function (c, ci) {
+          var x = PAD + ci * (NW + GAP_X),
+            y = PAD + (maxH - colH[ci]) / 2;
+          c.forEach(function (s) {
+            els[s.id].style.left = x + "px";
+            els[s.id].style.top = y + "px";
+            pos[s.id] = { x: x, y: y, w: NW, h: els[s.id].offsetHeight };
+            y += els[s.id].offsetHeight + GAP_Y;
+          });
+        });
+        var W = PAD * 2 + cols.length * NW + (cols.length - 1) * GAP_X,
+          H = PAD * 2 + maxH;
+        canvas.style.width = W + "px";
+        canvas.style.height = H + "px";
+        svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+        svg.setAttribute("width", W);
+        svg.setAttribute("height", H);
+
+        var link = function (from, to, cls, label) {
+          var a = pos[from],
+            b = pos[to];
+          if (!a || !b) return "";
+          var x1 = a.x + a.w,
+            y1 = a.y + a.h / 2,
+            x2 = b.x,
+            y2 = b.y + b.h / 2;
+          var mid = x1 + (x2 - x1) / 2,
+            r = Math.min(14, Math.abs(y2 - y1) / 2),
+            d;
+          if (Math.abs(y1 - y2) < 2) d = "M" + x1 + "," + y1 + " H" + (x2 - 9);
+          else {
+            var s = y2 > y1 ? 1 : -1;
+            d =
+              "M" +
+              x1 +
+              "," +
+              y1 +
+              " H" +
+              (mid - r) +
+              " Q" +
+              mid +
+              "," +
+              y1 +
+              " " +
+              mid +
+              "," +
+              (y1 + r * s) +
+              " V" +
+              (y2 - r * s) +
+              " Q" +
+              mid +
+              "," +
+              y2 +
+              " " +
+              (mid + r) +
+              "," +
+              y2 +
+              " H" +
+              (x2 - 9);
+          }
+          return (
+            '<path class="' +
+            cls +
+            '" d="' +
+            d +
+            '" marker-end="url(#ar)" data-from="' +
+            esc(from) +
+            '" data-to="' +
+            esc(to) +
+            '"/>' +
+            (label
+              ? '<text class="lbl" x="' +
+                mid +
+                '" y="' +
+                ((y1 + y2) / 2 - 8) +
+                '" text-anchor="middle">' +
+                esc(label) +
+                "</text>"
+              : "")
+          );
+        };
+
+        var parts = [
+          "<defs>" +
+            '<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"/></marker>' +
+            '<marker id="arh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--svc)"/></marker></defs>',
+        ];
+        steps.forEach(function (t) {
+          (t.needs || []).forEach(function (sid) {
+            if (byId[sid]) parts.push(link(sid, t.id, "", t.gate));
+          });
+        });
+        // Teardown hangs off the last real column with a dashed edge: reachable, not required.
+        var tails = steps.filter(function (s) {
+          return depth[s.id] === lastCol;
+        });
+        tdNodes.forEach(function (td) {
+          tails.forEach(function (s) {
+            parts.push(link(s.id, td.id, "stop", null));
+          });
+        });
+        svg.insertAdjacentHTML("beforeend", parts.join(""));
+
+        // ---------- drawer ----------
+        var drawer = document.getElementById("drawer"),
+          body = document.getElementById("dBody");
+        var openDrawer = function (html) {
+          body.innerHTML = html;
+          drawer.classList.add("open");
+        };
+        var closeDrawer = function () {
+          drawer.classList.remove("open");
+          canvas.querySelectorAll(".node").forEach(function (e) {
+            e.classList.remove("sel");
+          });
+          svg.querySelectorAll("path").forEach(function (p) {
+            p.classList.remove("hot");
+            p.setAttribute("marker-end", "url(#ar)");
+          });
+          tool(null);
+        };
+        document.getElementById("dClose").onclick = closeDrawer;
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") closeDrawer();
+        });
+
+        var tool = function (on) {
+          ["bPorts", "bGaps"].forEach(function (id) {
+            document.getElementById(id).classList.toggle("on", id === on);
+          });
+        };
+
+        var showNode = function (id) {
+          var s = byId[id];
+          if (!s) return;
+          tool(null);
+          canvas.querySelectorAll(".node").forEach(function (e) {
+            e.classList.toggle("sel", e.dataset.id === id);
+          });
+          svg.querySelectorAll("path").forEach(function (p) {
+            var hot = p.dataset.from === id || p.dataset.to === id;
+            p.classList.toggle("hot", hot);
+            p.setAttribute("marker-end", hot ? "url(#arh)" : "url(#ar)");
+          });
+
+          var h = "<h2>" + esc(s.title) + "</h2>";
+          if (s._td) {
+            h += '<p class="where">' + esc(s._td.evidence || "") + "</p>";
+            if (s._td.destroys)
+              h +=
+                '<div class="banner bad"><b>Destroys data.</b> Loses ' +
+                esc(s._td.destroys) +
+                ".</div>";
+            h +=
+              "<pre>" +
+              esc(s.command) +
+              '</pre><button class="copy" data-cmd="' +
+              esc(s.command) +
+              '">copy command</button>';
+            if (!s._td.destroys)
+              h +=
+                '<div class="row"><span class="k">Keeps</span><span>The volumes survive, so data is still there next time.</span></div>';
+            return openDrawer(h);
+          }
+          h +=
+            '<p class="where">' +
+            esc(s.cwd || ".") +
+            (s.evidence ? "  ·  from " + esc(s.evidence) : "") +
+            "</p>";
+          if (s.unverified)
+            h +=
+              '<div class="banner warn"><b>Unverified.</b> ' +
+              esc(s.unverified) +
+              "</div>";
+          h +=
+            "<pre>" +
+            esc(s.command) +
+            '</pre><button class="copy" data-cmd="' +
+            esc(s.command) +
+            '">copy command</button>';
+          if (s.verify)
+            h +=
+              '<div class="row"><span class="k">Worked when</span><span>' +
+              esc(s.verify) +
+              "</span></div>";
+          if (s.gate)
+            h +=
+              '<div class="row"><span class="k">Waits for</span><span>' +
+              esc(s.gate) +
+              "</span></div>";
+          if (s.starts && s.starts.length)
+            h +=
+              '<div class="row"><span class="k">Starts</span><span>' +
+              s.starts
+                .map(function (p) {
+                  return (
+                    esc(p.name) +
+                    (p.port
+                      ? ' <span class="port">:' + esc(p.port) + "</span>"
+                      : "")
+                  );
+                })
+                .join(", ") +
+              "</span></div>";
+          if (s.requires && s.requires.length)
+            h +=
+              '<div class="row"><span class="k">Set first</span><span>' +
+              s.requires
+                .map(function (r) {
+                  return (
+                    '<span class="port">' +
+                    esc(r.name) +
+                    "</span>" +
+                    (r.note ? " (" + esc(r.note) + ")" : "")
+                  );
+                })
+                .join(", ") +
+              "</span></div>";
+          h +=
+            '<div class="row"><span class="k">Terminal</span><span>' +
+            (s.terminal === "own"
+              ? "needs its own; it stays in the foreground"
+              : "can share one") +
+            "</span></div>";
+          if (s.fails && s.fails.length)
+            h +=
+              '<div class="row"><span class="k">If it fails</span><span>' +
+              s.fails
+                .map(function (f) {
+                  return (
+                    '<div class="fx"><span class="s">' +
+                    esc(f.symptom) +
+                    '</span><br><span class="f">' +
+                    esc(f.fix) +
+                    "</span></div>"
+                  );
+                })
+                .join("") +
+              "</span></div>";
+          openDrawer(h);
+        };
+
+        canvas.addEventListener("click", function (e) {
+          var el = e.target.closest(".node");
+          if (el) showNode(el.dataset.id);
+        });
+        document.addEventListener("click", function (e) {
+          var b = e.target.closest("button.copy");
+          if (!b) return;
+          navigator.clipboard.writeText(b.dataset.cmd).then(function () {
+            b.textContent = "copied";
+            b.classList.add("done");
+            setTimeout(function () {
+              b.textContent = "copy command";
+              b.classList.remove("done");
+            }, 1400);
+          });
+        });
+
+        document.getElementById("bPorts").onclick = function () {
+          canvas.querySelectorAll(".node").forEach(function (e) {
+            e.classList.remove("sel");
+          });
+          tool("bPorts");
+          openDrawer(
+            '<h2>Ports claimed</h2><p class="where">' +
+              portRows.length +
+              " in total</p>" +
+              (portRows.length
+                ? "<table><thead><tr><th>Port</th><th>Service</th><th>From</th></tr></thead><tbody>" +
+                  portRows
+                    .map(function (r) {
+                      return (
+                        '<tr><td><span class="port">' +
+                        esc(r.port) +
+                        "</span>" +
+                        (clash[r.port]
+                          ? ' <span class="chip clash">clash</span>'
+                          : "") +
+                        "</td><td>" +
+                        esc(r.name) +
+                        "</td><td>" +
+                        esc(r.step) +
+                        "</td></tr>"
+                      );
+                    })
+                    .join("") +
+                  "</tbody></table>"
+                : "<p>No step publishes a port.</p>"),
+          );
+        };
+        document.getElementById("gapN").textContent = gaps.length;
+        document.getElementById("bGaps").onclick = function () {
+          canvas.querySelectorAll(".node").forEach(function (e) {
+            e.classList.remove("sel");
+          });
+          tool("bGaps");
+          openDrawer(
+            '<h2>Not established</h2><p class="where">Nothing here was guessed at.</p>' +
+              (gaps.length
+                ? gaps
+                    .map(function (g) {
+                      return (
+                        '<div class="gapitem"><h3>' +
+                        esc(g.what) +
+                        "</h3><p>" +
+                        esc(g.why) +
+                        "</p></div>"
+                      );
+                    })
+                    .join("")
+                : "<p>Every step traces to a file in the repository.</p>"),
+          );
+        };
+
+        // ---------- pan and zoom ----------
+        var vp = document.getElementById("viewport");
+        var z = 1,
+          ox = 0,
+          oy = 0;
+        var apply = function () {
+          canvas.style.transform =
+            "translate(" + ox + "px," + oy + "px) scale(" + z + ")";
+        };
+        var fit = function () {
+          var pad = 60;
+          z = Math.min(
+            1.15,
+            (vp.clientWidth - pad * 2) / W,
+            (vp.clientHeight - pad * 2) / H,
+          );
+          if (!isFinite(z) || z <= 0) z = 1;
+          ox = (vp.clientWidth - W * z) / 2;
+          oy = (vp.clientHeight - H * z) / 2;
+          apply();
+        };
+        var zoomBy = function (f) {
+          var cx = vp.clientWidth / 2,
+            cy = vp.clientHeight / 2,
+            nz = Math.max(0.25, Math.min(2, z * f));
+          ox = cx - (cx - ox) * (nz / z);
+          oy = cy - (cy - oy) * (nz / z);
+          z = nz;
+          apply();
+        };
+        document.getElementById("fit").onclick = fit;
+        document.getElementById("zin").onclick = function () {
+          zoomBy(1.18);
+        };
+        document.getElementById("zout").onclick = function () {
+          zoomBy(1 / 1.18);
+        };
+        var drag = null;
+        vp.addEventListener("mousedown", function (e) {
+          if (e.target.closest(".node")) return;
+          drag = { x: e.clientX, y: e.clientY, ox: ox, oy: oy };
+          vp.classList.add("drag");
+        });
+        window.addEventListener("mousemove", function (e) {
+          if (!drag) return;
+          ox = drag.ox + (e.clientX - drag.x);
+          oy = drag.oy + (e.clientY - drag.y);
+          apply();
+        });
+        window.addEventListener("mouseup", function () {
+          drag = null;
+          vp.classList.remove("drag");
+        });
+        vp.addEventListener(
+          "wheel",
+          function (e) {
+            e.preventDefault();
+            var nz = Math.max(
+              0.25,
+              Math.min(2, z * Math.pow(2, -e.deltaY / 420)),
+            );
+            ox = e.clientX - (e.clientX - ox) * (nz / z);
+            oy = e.clientY - (e.clientY - oy) * (nz / z);
+            z = nz;
+            apply();
+          },
+          { passive: false },
+        );
+        fit();
+        window.addEventListener("resize", fit);
+
+        var svc = steps.filter(function (s) {
+          return s.kind !== "task";
+        }).length;
+        var tag = [
+          steps.length + " steps",
+          cols.length - tdNodes.length + " stages",
+        ];
+        if (svc) tag.push(svc + " long-running");
+        if (portRows.length) tag.push(portRows.length + " ports");
+        document.getElementById("tagline").textContent = tag.join(" · ");
+
+        document.getElementById("printable").innerHTML =
+          "<h1>" +
+          esc(data.project || "Project") +
+          " — running it locally</h1>" +
+          '<p class="sub">' +
+          tag.join(" · ") +
+          "</p><h2>Steps in order</h2>" +
+          steps
+            .map(function (s) {
+              return (
+                '<div class="s"><h3>' +
+                s._n +
+                ". " +
+                esc(s.title) +
+                "</h3>" +
+                (s.gate ? "<p>Waits for: " + esc(s.gate) + "</p>" : "") +
+                "<pre>" +
+                esc(s.command) +
+                "</pre>" +
+                (s.verify ? "<p>Worked when: " + esc(s.verify) + "</p>" : "") +
+                (s.unverified
+                  ? "<p><b>Unverified.</b> " + esc(s.unverified) + "</p>"
+                  : "") +
+                "</div>"
+              );
+            })
+            .join("") +
+          (teardown.length
+            ? "<h2>Shutting down</h2>" +
+              teardown
+                .map(function (t) {
+                  return (
+                    '<div class="s"><pre>' +
+                    esc(t.command) +
+                    "</pre>" +
+                    (t.destroys
+                      ? "<p><b>Destroys data.</b> Loses " +
+                        esc(t.destroys) +
+                        ".</p>"
+                      : "") +
+                    "</div>"
+                  );
+                })
+                .join("")
+            : "") +
+          (gaps.length
+            ? "<h2>Not established</h2>" +
+              gaps
+                .map(function (g) {
+                  return (
+                    '<div class="s"><h3>' +
+                    esc(g.what) +
+                    "</h3><p>" +
+                    esc(g.why) +
+                    "</p></div>"
+                  );
+                })
+                .join("")
+            : "");
+      })();
+    </script>
+  </body>
+</html>
