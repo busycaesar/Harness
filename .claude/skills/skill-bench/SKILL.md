@@ -2,6 +2,8 @@
 name: skill-bench
 description: Score this repo's harness skills (in skills/) against the locked skill rubric and save the scores as a JSON snapshot. Use to measure skill quality before and after changes.
 argument-hint: <output JSON path> [skill names…]
+metadata:
+  model-tier: Frontier
 ---
 
 # Skill bench: score harness skills

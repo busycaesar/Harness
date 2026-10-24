@@ -2,6 +2,8 @@
 name: skill-find
 description: Find skills similar to this repo's harness skills (on GitHub and elsewhere) and save copies of them for comparison. Does not change our skills.
 argument-hint: <run folder> <sources per skill> <skill names…>
+metadata:
+  model-tier: Mid
 ---
 
 # Skill find: collect similar skills

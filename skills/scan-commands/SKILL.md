@@ -1,6 +1,8 @@
 ---
 name: scan-commands
 description: Use when the user wants a project's own shell commands found and recorded — install, run per environment, build, test (all, one file, one test), lint, format, typecheck and others such as migrations or starting services. Scans the project's files (CI, task files, containers, manifests, docs) and writes one YAML file with each command, the folder to run it from, what it needs first and the file it came from. Reads only: it does not run, verify or fix commands, and does not write docs or agent config.
+metadata:
+  model-tier: Budget
 ---
 
 # Project commands

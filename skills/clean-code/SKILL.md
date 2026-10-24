@@ -2,6 +2,8 @@
 name: clean-code
 description: Check code against the project's clean-code rules and write a Markdown report of every place that breaks one. Use when asked to check uncommitted, staged or branch changes, given paths, or the whole codebase against those rules; defaults to all uncommitted changes. Reports only: never edits code, and checks nothing the rules do not state (not a bug hunt or general review).
 argument-hint: "[staged | branch | all | <path>...] (default: all uncommitted changes)"
+metadata:
+  model-tier: Mid
 ---
 
 # Clean code check

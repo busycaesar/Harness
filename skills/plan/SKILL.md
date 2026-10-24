@@ -2,6 +2,8 @@
 name: plan
 description: Plan how to implement technical requirements that already exist — a feature, change, ticket body, prompt or requirements file. Researches the codebase in depth, settles the technical approach, and writes a plan of file-specific tasks grouped into waves, where tasks in the same wave can run in parallel. Use when the what is known and the how is needed; not for deciding what to build, and not for making the change itself. Produces a plan document only; never writes code.
 argument-hint: <requirements text or path to a requirements file>
+metadata:
+  model-tier: Frontier
 ---
 
 # Plan: Requirements → Implementation Plan

@@ -2,6 +2,8 @@
 name: skill-adopt
 description: Compare saved similar skills with this repo's harness skills, find what they do better, and improve ours within the skill conventions. Records every adopted and rejected idea with its source.
 argument-hint: <run folder> <skill names…>
+metadata:
+  model-tier: Frontier
 ---
 
 # Skill adopt: learn from saved skills, improve ours

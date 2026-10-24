@@ -2,6 +2,8 @@
 name: architecture-design
 description: "Use when given an architecture data file (a file map carrying `files`, or a master carrying `sections`) and a map path, to render it as one self-contained, offline, interactive HTML map. Renders only: not for listing files, resolving imports, assigning tiers or otherwise analysing a codebase."
 user-invocable: false
+metadata:
+  model-tier: Budget
 ---
 
 # Architecture map: how it is drawn

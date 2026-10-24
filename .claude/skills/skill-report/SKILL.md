@@ -2,6 +2,8 @@
 name: skill-report
 description: Write a Markdown report comparing before and after rubric scores of this repo's harness skills — how much each improved, in which dimensions, and which changes were kept or reverted.
 argument-hint: <run folder>
+metadata:
+  model-tier: Mid
 ---
 
 # Skill report: before vs after

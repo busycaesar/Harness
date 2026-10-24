@@ -2,6 +2,8 @@
 description: Work out a project's architecture from its code — every file, which file imports which, where the program starts, which tier (frontend to data) each part belongs to, and whether it needs splitting into sections. The result is an interactive architecture map: one HTML file, or a master map with section maps for a large project. Use to get oriented in an unfamiliar codebase.
 argument-hint: "[folder to map, default: the whole project]"
 disable-model-invocation: true
+metadata:
+  model-tier: Mid
 ---
 
 # Project map

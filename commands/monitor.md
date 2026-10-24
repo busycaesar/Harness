@@ -1,6 +1,8 @@
 ---
 description: Start the local Claude Code monitor dashboard in the background and print the URL to open — a read-only view of the live sessions and subagents for this project
 disable-model-invocation: true
+metadata:
+  model-tier: Budget
 ---
 
 # Monitor (local session dashboard)

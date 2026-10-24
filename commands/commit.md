@@ -1,6 +1,8 @@
 ---
 description: Suggest a single commit message for the files already staged — never runs git add or git commit
 disable-model-invocation: true
+metadata:
+  model-tier: Budget
 ---
 
 # Commit (message suggestion for staged files only)

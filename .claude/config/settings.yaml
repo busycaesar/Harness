@@ -1,0 +1,9 @@
+# The model each tier resolves to. Skills and commands declare their tier in
+# frontmatter as `metadata.model-tier`; when model names change, change them
+# here and nowhere else. Keys match the frontmatter values exactly.
+model-tiers:
+  Budget: claude-haiku-4-5-20251001
+  Mid: claude-sonnet-5
+  Frontier: claude-opus-5
+
+max_parallel_tasks: 4

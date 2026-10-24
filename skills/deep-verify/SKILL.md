@@ -1,6 +1,8 @@
 ---
 name: deep-verify
 description: Rigorous, multi-agent, evidence-backed verification of specific claims about code, ending in a verdict per claim (confirmed, refuted, partially true, unverifiable) with file:line and executed evidence. Use when the user wants a statement about a codebase verified, confirmed or double-checked and a wrong answer would be costly. Not for simple lookups, open-ended exploration or bug hunting with no specific claim to test, reviewing a diff, or ticking off a requirements list.
+metadata:
+  model-tier: Frontier
 ---
 
 # Deep Verify

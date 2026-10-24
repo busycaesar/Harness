@@ -2,6 +2,8 @@
 name: runbook
 description: Work out how to run a project locally and draw it as an interactive HTML runbook — every command in the order it must run, what each one starts, which ports it claims, how to tell it actually came up, and how to tear it down. Use when someone needs to get an unfamiliar project running, asks how to start it locally, wants the setup steps documented, or asks for a local-dev guide.
 argument-hint: "[folder to read, default: the whole project]"
+metadata:
+  model-tier: Mid
 ---
 
 # Runbook

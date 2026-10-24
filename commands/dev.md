@@ -2,6 +2,8 @@
 description: Take requirements (a prompt, ticket description or requirements file) all the way to implemented changes by running the spec, plan and implement skills in order, then checking the changed code against the clean-code rules.
 argument-hint: <requirements text, path to a requirements file, or an existing work item folder to resume>
 disable-model-invocation: true
+metadata:
+  model-tier: Frontier
 ---
 
 # Dev: Requirements → Spec → Plan → Implementation → Clean code

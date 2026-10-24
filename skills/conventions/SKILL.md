@@ -1,6 +1,8 @@
 ---
 name: conventions
 description: Scan the whole project and write the conventions and clean-code practices it actually follows (naming, layout, imports, logging, tests, comments, simplicity, design, structure, readability, errors) as always-loaded rule files, each rule with how consistently it is followed and examples. Keeps hand-written rules across re-runs.
+metadata:
+  model-tier: Mid
 ---
 
 # Project conventions

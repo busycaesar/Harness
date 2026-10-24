@@ -1,6 +1,8 @@
 ---
 description: Scan a project for its own commands and for the conventions and clean-code practices it follows, and write them to the project's config and rules.
 disable-model-invocation: true
+metadata:
+  model-tier: Budget
 ---
 
 # X-ray: Commands and conventions

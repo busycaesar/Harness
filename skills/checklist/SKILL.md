@@ -4,6 +4,8 @@ description: Turn technical requirements (inline text or a requirements file) in
 argument-hint: <requirements text or path to a requirements file>
 user-invocable: false
 context: fork
+metadata:
+  model-tier: Mid
 ---
 
 # Checklist: Requirements → Verification Checklist
