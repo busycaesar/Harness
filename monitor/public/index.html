@@ -18,6 +18,12 @@
   --ink-3: #566a6e;
   --lost-bg: #f7d9d6;
   --lost-ink: #9c1f17;
+  --busy-bg: #d0eddb;
+  --busy-ink: #0f5c33;
+  --waiting-bg: #f8e3bd;
+  --waiting-ink: #7a4f05;
+  --idle-bg: #dbe1e2;
+  --idle-ink: #3f5154;
   --focus: #1a56a8;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
@@ -45,6 +51,12 @@
     --ink-3: #179110;
     --lost-bg: #3a0f0c;
     --lost-ink: #ff9f93;
+    --busy-bg: #092707;
+    --busy-ink: #16c60c;
+    --waiting-bg: #2b2209;
+    --waiting-ink: #f5cf7d;
+    --idle-bg: #0f1a0f;
+    --idle-ink: #a2db9f;
     --focus: #48ff3d;
     --sans: var(--mono);
     --page-texture: repeating-linear-gradient(to bottom, rgba(22, 198, 12, 0.009) 0 1px, rgba(22, 198, 12, 0) 1px 3px);
@@ -62,6 +74,12 @@
   --ink-3: #179110;
   --lost-bg: #3a0f0c;
   --lost-ink: #ff9f93;
+  --busy-bg: #092707;
+  --busy-ink: #16c60c;
+  --waiting-bg: #2b2209;
+  --waiting-ink: #f5cf7d;
+  --idle-bg: #0f1a0f;
+  --idle-ink: #a2db9f;
   --focus: #48ff3d;
   --sans: var(--mono);
   --page-texture: repeating-linear-gradient(to bottom, rgba(22, 198, 12, 0.009) 0 1px, rgba(22, 198, 12, 0) 1px 3px);
@@ -123,15 +141,58 @@ body {
   border-radius: 6px;
   background: var(--surface-quiet);
 }
-.session-goal {
+/* wrapping lets a long goal push the status onto its own line instead of crowding it at narrow widths */
+.session-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1rem;
   margin: 0 0 0.9rem;
   padding-bottom: 0.65rem;
   border-bottom: 1px solid var(--line-soft);
+}
+.session-goal {
+  flex: 1 1 11rem;
+  min-width: 0;
+  margin: 0;
   color: var(--ink-3);
   font: 500 var(--step--1)/1.45 var(--sans);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   overflow-wrap: anywhere;
+}
+.session-status {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0 0 0 auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.1rem 0.5rem 0.1rem 0.4rem;
+  border-radius: 3px;
+  font: 600 var(--step--1)/1.4 var(--sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.session-status::before {
+  content: "";
+  flex: none;
+  align-self: center;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+.session-status.busy { background: var(--busy-bg); color: var(--busy-ink); }
+.session-status.waiting { background: var(--waiting-bg); color: var(--waiting-ink); }
+.session-status.idle { background: var(--idle-bg); color: var(--idle-ink); }
+.status-label { flex: none; }
+.status-reason { min-width: 0; font-weight: 500; letter-spacing: 0.02em; text-transform: none; }
+.status-reason::before { content: "· "; }
+@media (prefers-reduced-motion: no-preference) {
+  .session-status.busy::before { animation: pulse 1.6s ease-in-out infinite; }
 }
 .tasks {
   display: flex;
@@ -232,7 +293,7 @@ body {
 }
 /* one rail per row, owned by the row's first helper: it starts on the lane and stops at the last drop in the
    row, so a lone helper gets a bare elbow and no row ever trails a line past its final child */
-.row-start::before {
+.helper.row-start::before {
   content: "";
   position: absolute;
   top: 0;
@@ -262,6 +323,7 @@ body {
   body { background-image: none; }
   .stream-lost::before { animation: none; }
   .active-box::before { animation: none; }
+  .session-status.busy::before { animation: none; }
 }
 </style>
 </head>
@@ -282,6 +344,8 @@ const DISMISSED_STORAGE_KEY = "agent-monitor.dismissed";
 const FIXTURE_URLS = ["/fixtures/snapshot.json", "../fixtures/snapshot.json"];
 const RECONNECT_DELAY_MS = 3000;
 const STATUS_ORDER = { waiting: 0, busy: 1, idle: 2 };
+const STATUS_LABELS = { waiting: "Waiting", busy: "Busy", idle: "Idle" };
+const WAITING_STATUS = "waiting";
 const FINISHED_STATE = "finished";
 const MAIN_BOX_PARENT = null;
 const MEASURING_CLASS = "measuring";
@@ -434,9 +498,25 @@ function buildTaskList(tasks, sessionId) {
   return list;
 }
 
+function buildSessionStatus(session) {
+  const status = el("p", `session-status ${session.status}`);
+  status.append(el("span", "status-label", STATUS_LABELS[session.status]));
+  if (session.status === WAITING_STATUS && session.waitingFor !== null) {
+    status.append(el("span", "status-reason", session.waitingFor));
+  }
+  return status;
+}
+
+function buildSessionHead(session) {
+  const head = el("div", "session-head");
+  if (session.goal) head.append(el("h2", "session-goal", session.goal));
+  head.append(buildSessionStatus(session));
+  return head;
+}
+
 function buildSessionRegion(session) {
   const region = el("section", "session");
-  if (session.goal) region.append(el("h2", "session-goal", session.goal));
+  region.append(buildSessionHead(session));
   const shownTasks = session.tasks.filter((task) => isShown(task, session.sessionId));
   region.append(buildTaskList(shownTasks, session.sessionId));
   return region;
