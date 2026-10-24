@@ -131,3 +131,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# monitor session-goal cache (runtime state)
+monitor/.session-goals.json
