@@ -29,6 +29,8 @@ Harness is a reusable, self-improving [Claude Code](https://claude.com/claude-co
 - **`/conventions`**: Finds the conventions and clean-code practices a project actually follows and writes them as rule files, keeping hand-written rules.
 - **`/clean-code`**: Checks code against the clean-code rules and writes a Markdown report; never edits code.
 - **`/deep-verify`**: Verifies claims about code rigorously with multiple agents and evidence-backed answers.
+- **`/runbook`**: Works out how to run a project locally and draws it as an interactive HTML runbook, with every command traced to the repository.
+- **`/monitor`**: Starts a local, read-only dashboard of the project's live Claude Code sessions and subagents.
 - **`/commit`**: Suggests one commit message for the staged files; never runs git.
 - **`/commits`**: Groups unstaged changes into logical commits and outputs the commands to run; never runs them.
 
