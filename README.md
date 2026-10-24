@@ -11,6 +11,8 @@
 
 Harness is a reusable, self-improving [Claude Code](https://claude.com/claude-code) harness: a self-contained set of skills, rules and config that lives entirely under a project's `.claude/` folder.
 
+![Harness architecture](harness.png)
+
 ## Features
 
 - **`/skill-improve`** (this repo only): scores the harness skills, learns from similar skills elsewhere and keeps only the changes that raise the score.
