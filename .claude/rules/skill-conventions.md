@@ -31,4 +31,5 @@ Design decisions every harness skill in `skills/` and command in `commands/` mus
 - A command is a single file that only the user triggers and nothing invokes. Anything with supporting files, or that a skill or command invokes, is a skill.
 - No Cursor-era formats: no `.mdc`, `alwaysApply` or `globs`.
 - Do not add `disable-model-invocation: true` to a skill that another skill invokes; it would block that call.
+- Every skill declares `metadata.model-tier` in its frontmatter: `Budget`, `Mid` or `Frontier`. It records how much reasoning the work needs, so the choice survives models being renamed or replaced. Which model each tier resolves to lives only in `.claude/config/settings.yaml`.
 - Concise: every line earns its place. No padding, no repeated instructions, no motivational text.
