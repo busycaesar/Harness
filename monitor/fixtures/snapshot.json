@@ -1,703 +1,535 @@
 {
-  "generatedAt": 1761134400000,
+  "generatedAt": 1761135600000,
   "projects": [
     {
       "cwd": "/Users/devshah/Desktop/projects/Harness",
       "name": "Harness",
-      "liveSessions": 1,
+      "liveSessions": 4,
       "workspaces": []
-    },
-    {
-      "cwd": "/Users/devshah/Desktop/projects/genesis-on-prem",
-      "name": "genesis-on-prem",
-      "liveSessions": 5,
-      "workspaces": [
-        "link-classification",
-        "link-deploy",
-        "link-engine",
-        "link-ui"
-      ]
     }
   ],
   "sessions": [
     {
       "sessionId": "6f1c2a9e-41b7-4d0e-8a55-0c3b7e21d001",
       "pid": 48211,
-      "cwd": "/Users/devshah/Desktop/projects/genesis-on-prem/link-classification",
-      "project": "genesis-on-prem",
-      "workspace": "link-classification",
-      "name": "age-gender per face",
-      "status": "waiting",
-      "waitingFor": "permission prompt",
-      "statusUpdatedAt": 1761134394000,
-      "startedAt": 1761127200000,
-      "model": "claude-sonnet-5-5",
-      "version": "2.1.118",
-      "effort": "high",
-      "gitBranch": "feat/GOP-749/age-gender-per-face",
-      "pendingBackgroundAgents": 1,
-      "tokens": {
-        "input": 184230,
-        "output": 912480,
-        "cacheRead": 48210930,
-        "cacheCreation": 2840115
-      },
-      "lastTurnDurationMs": 9240,
-      "currentTurnStartedAt": 1761134306000,
-      "summary": "Waiting for input",
-      "agents": [
-        {
-          "agentId": "a3f9d1c07be24a10",
-          "agentType": "explorer",
-          "description": "Trace how detected faces flow from the face detector into the classification result payload and where age and gender attributes could attach",
-          "spawnDepth": 1,
-          "model": "claude-haiku-4-5",
-          "state": "active",
-          "tokens": {
-            "input": 53616,
-            "output": 88240,
-            "cacheRead": 5043200,
-            "cacheCreation": 446712
-          },
-          "summary": "Reading detector",
-          "lastActivityAt": 1761134391000
-        },
-        {
-          "agentId": "b71e0c55d9aa4f33",
-          "agentType": "builder",
-          "description": "Add age and gender fields to the per-face emit path and update the matching tests",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 49700,
-            "output": 104656,
-            "cacheRead": 3882176,
-            "cacheCreation": 582896
-          },
-          "summary": "Writing emit path",
-          "lastActivityAt": 1761134398000
-        },
-        {
-          "agentId": "11bc3e5a0d7f4916",
-          "agentType": "general-purpose",
-          "description": "Survey the OpenCLIP ensemble config for the thresholds the new family head will need",
-          "spawnDepth": 1,
-          "model": null,
-          "state": "finished",
-          "tokens": {
-            "input": 14712,
-            "output": 148496,
-            "cacheRead": 4265216,
-            "cacheCreation": 352920
-          },
-          "summary": "Thresholds listed",
-          "lastActivityAt": 1761134120000
-        }
-      ]
-    },
-    {
-      "sessionId": "0d8e5b3a-72c4-4f19-9b60-5e1a4c90d002",
-      "pid": 51877,
-      "cwd": "/Users/devshah/Desktop/projects/genesis-on-prem/link-ui",
-      "project": "genesis-on-prem",
-      "workspace": "link-ui",
-      "name": "scope editor polish",
-      "status": "busy",
-      "waitingFor": null,
-      "statusUpdatedAt": 1761134399000,
-      "startedAt": 1761133800000,
-      "model": "claude-opus-4-7",
-      "version": "2.1.118",
-      "effort": "xhigh",
-      "gitBranch": "feat/scope-editor-polish",
-      "pendingBackgroundAgents": 0,
-      "tokens": {
-        "input": 612004,
-        "output": 2204910,
-        "cacheRead": 131882400,
-        "cacheCreation": 7120330
-      },
-      "lastTurnDurationMs": 42800,
-      "currentTurnStartedAt": 1761134227000,
-      "summary": "Running vitest",
-      "agents": [
-        {
-          "agentId": "aa01c2d3e4f50611",
-          "agentType": "builder",
-          "description": "Replace the scope editor chip row with the Ether card treatment and drop the legacy glass classes",
-          "spawnDepth": 1,
-          "model": "claude-opus-4-7",
-          "state": "finished",
-          "tokens": {
-            "input": 24908,
-            "output": 39232,
-            "cacheRead": 2593472,
-            "cacheCreation": 448936
-          },
-          "summary": "Chips restyled",
-          "lastActivityAt": 1761133600000
-        },
-        {
-          "agentId": "bb12d3e4f5061722",
-          "agentType": "qa-critic",
-          "description": "Check the scope editor at 375px and 768px for horizontal overflow",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "finished",
-          "tokens": {
-            "input": 24344,
-            "output": 60896,
-            "cacheRead": 3121600,
-            "cacheCreation": 140272
-          },
-          "summary": "No overflow",
-          "lastActivityAt": 1761133520000
-        }
-      ]
-    },
-    {
-      "sessionId": "92ab7c10-3e5d-4a82-b1f6-7d0e2a44f003",
-      "pid": 53390,
-      "cwd": "/Users/devshah/Desktop/projects/genesis-on-prem/link-engine",
-      "project": "genesis-on-prem",
-      "workspace": "link-engine",
-      "name": "engine scratch",
-      "status": "busy",
-      "waitingFor": null,
-      "statusUpdatedAt": 1761134380000,
-      "startedAt": 1761133500000,
-      "model": null,
-      "version": "2.1.118",
-      "effort": null,
-      "gitBranch": null,
-      "pendingBackgroundAgents": null,
-      "tokens": {
-        "input": 312,
-        "output": 1480,
-        "cacheRead": 0,
-        "cacheCreation": 18450
-      },
-      "lastTurnDurationMs": null,
-      "currentTurnStartedAt": 1761134359000,
-      "summary": "Reading solution",
-      "agents": []
-    },
-    {
-      "sessionId": "7c6b4d21-9f08-4e3a-85d1-2a9f0b55d005",
-      "pid": 52104,
-      "cwd": "/Users/devshah/Desktop/projects/genesis-on-prem/link-deploy",
-      "project": "genesis-on-prem",
-      "workspace": "link-deploy",
-      "name": "linkctl arm64 publish",
-      "status": "busy",
-      "waitingFor": null,
-      "statusUpdatedAt": 1761134370000,
-      "startedAt": 1761130000000,
-      "model": "claude-sonnet-5-5",
-      "version": "2.1.118",
-      "effort": "medium",
-      "gitBranch": "fix/linkctl-selfcontained-publish",
-      "pendingBackgroundAgents": 0,
-      "tokens": {
-        "input": 98400,
-        "output": 412200,
-        "cacheRead": 21449000,
-        "cacheCreation": 1883400
-      },
-      "lastTurnDurationMs": 6100,
-      "currentTurnStartedAt": 1761134361000,
-      "summary": "Republishing bundle",
-      "agents": [
-        {
-          "agentId": "c1a0b2d3e4f50601",
-          "agentType": "builder",
-          "description": "Rebuild the linkctl arm64 self-contained publish so the single-file bundle keeps its native assets",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 22728,
-            "output": 40784,
-            "cacheRead": 4212160,
-            "cacheCreation": 558960
-          },
-          "summary": "Publishing arm64",
-          "lastActivityAt": 1761134396000
-        },
-        {
-          "agentId": "c2b1c3d4e5f60712",
-          "agentType": "qa-critic",
-          "description": "Run the linkctl end-to-end container suite against the republished bundle and report every failure",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 59256,
-            "output": 121920,
-            "cacheRead": 4143872,
-            "cacheCreation": 435184
-          },
-          "summary": "Running e2e",
-          "lastActivityAt": 1761134389000
-        },
-        {
-          "agentId": "c3c2d4e5f6071823",
-          "agentType": "explorer",
-          "description": "Find every place the installer scripts assume a framework-dependent layout",
-          "spawnDepth": 1,
-          "model": "claude-haiku-4-5",
-          "state": "active",
-          "tokens": {
-            "input": 26360,
-            "output": 120528,
-            "cacheRead": 7319744,
-            "cacheCreation": 89912
-          },
-          "summary": "Grepping installers",
-          "lastActivityAt": 1761134381000
-        },
-        {
-          "agentId": "c4d3e5f607182934",
-          "agentType": "reviewer",
-          "description": "Review the publish profile change for Windows and macOS path assumptions",
-          "spawnDepth": 2,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 57156,
-            "output": 72448,
-            "cacheRead": 5349760,
-            "cacheCreation": 508168
-          },
-          "summary": "Reading profile",
-          "lastActivityAt": 1761134374000
-        },
-        {
-          "agentId": "c5e4f60718293a45",
-          "agentType": "security-auditor",
-          "description": "Audit the new self-contained bundle for unsigned native binaries before it reaches the release channel",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 37944,
-            "output": 41360,
-            "cacheRead": 4486904,
-            "cacheCreation": 299912
-          },
-          "summary": "Checking signatures",
-          "lastActivityAt": 1761134367000
-        },
-        {
-          "agentId": "c6f50718293a4b56",
-          "agentType": "builder",
-          "description": "Update the macOS and Windows build scripts to pass the new runtime identifier through",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 5724,
-            "output": 36688,
-            "cacheRead": 2138304,
-            "cacheCreation": 13112
-          },
-          "summary": "Editing build.sh",
-          "lastActivityAt": 1761134359000
-        },
-        {
-          "agentId": "c70618293a4b5c67",
-          "agentType": "general-purpose",
-          "description": "Draft the release note for the self-contained linkctl publish",
-          "spawnDepth": 1,
-          "model": null,
-          "state": "active",
-          "tokens": {
-            "input": 18800,
-            "output": 177472,
-            "cacheRead": 1670784,
-            "cacheCreation": 34552
-          },
-          "summary": "Drafting note",
-          "lastActivityAt": 1761134342000
-        },
-        {
-          "agentId": "c8071a293a4b5c78",
-          "agentType": "explorer",
-          "description": "Check whether the deploy tests pin a framework-dependent path",
-          "spawnDepth": 1,
-          "model": "claude-haiku-4-5",
-          "state": "finished",
-          "tokens": {
-            "input": 40928,
-            "output": 47888,
-            "cacheRead": 2191360,
-            "cacheCreation": 557224
-          },
-          "summary": "Path pinned",
-          "lastActivityAt": 1761133760000
-        },
-        {
-          "agentId": "c9182a3b4c5d6e89",
-          "agentType": "reviewer",
-          "description": "Review the first publish attempt for missing trimming settings",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "finished",
-          "tokens": {
-            "input": 21948,
-            "output": 9408,
-            "cacheRead": 2626688,
-            "cacheCreation": 460568
-          },
-          "summary": "Trimming missing",
-          "lastActivityAt": 1761133480000
-        }
-      ]
-    },
-    {
-      "sessionId": "b3d7e2f4-61c9-4a35-9e12-8f0a5c33d006",
-      "pid": 54820,
-      "cwd": "/Users/devshah/Desktop/projects/genesis-on-prem/link-engine",
-      "project": "genesis-on-prem",
-      "workspace": "link-engine",
-      "name": "ingest balance sweep",
-      "status": "busy",
-      "waitingFor": null,
-      "statusUpdatedAt": 1761134398000,
-      "startedAt": 1761120000000,
-      "model": "claude-opus-4-7",
-      "version": "2.1.118",
-      "effort": "xhigh",
-      "gitBranch": "feat/GOP-812/ingest-balance-sheet",
-      "pendingBackgroundAgents": 3,
-      "tokens": {
-        "input": 421880,
-        "output": 1740220,
-        "cacheRead": 96204110,
-        "cacheCreation": 5012440
-      },
-      "lastTurnDurationMs": 31500,
-      "currentTurnStartedAt": 1761134172000,
-      "summary": "Reconciling buckets",
-      "agents": [
-        {
-          "agentId": "e001b2c3d4e5f6a7b",
-          "agentType": "explorer",
-          "description": "Walk the UFDR source adapter and list every event kind it maps into the unified model",
-          "spawnDepth": 1,
-          "model": "claude-haiku-4-5",
-          "state": "active",
-          "tokens": {
-            "input": 18128,
-            "output": 39376,
-            "cacheRead": 7432512,
-            "cacheCreation": 143728
-          },
-          "summary": "Mapping events",
-          "lastActivityAt": 1761134394000
-        },
-        {
-          "agentId": "e011b2c3d4e5f6a7b",
-          "agentType": "builder",
-          "description": "Add the missing attachment bucket to the ingest balance sheet so nothing lands unaccounted",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 37468,
-            "output": 176192,
-            "cacheRead": 6547072,
-            "cacheCreation": 288840
-          },
-          "summary": "Editing balance sheet",
-          "lastActivityAt": 1761134387000
-        },
-        {
-          "agentId": "e021b2c3d4e5f6a7b",
-          "agentType": "qa-critic",
-          "description": "Reconcile the blob store against the source archive for the meir3 case and report any gap",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 8880,
-            "output": 140544,
-            "cacheRead": 1363392,
-            "cacheCreation": 244880
-          },
-          "summary": "Reconciling blobs",
-          "lastActivityAt": 1761134379000
-        },
-        {
-          "agentId": "e031b2c3d4e5f6a7b",
-          "agentType": "reviewer",
-          "description": "Review the balance-sheet change for tenant isolation violations against the ratchet baseline",
-          "spawnDepth": 2,
-          "model": "claude-opus-4-7",
-          "state": "active",
-          "tokens": {
-            "input": 11352,
-            "output": 122480,
-            "cacheRead": 4271040,
-            "cacheCreation": 560960
-          },
-          "summary": "Reading baseline",
-          "lastActivityAt": 1761134372000
-        },
-        {
-          "agentId": "e041b2c3d4e5f6a7b",
-          "agentType": "builder",
-          "description": "Backfill the classification results migration so older cases gain the new per-face columns",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 37012,
-            "output": 163792,
-            "cacheRead": 5992192,
-            "cacheCreation": 176576
-          },
-          "summary": "Writing migration",
-          "lastActivityAt": 1761134365000
-        },
-        {
-          "agentId": "e051b2c3d4e5f6a7b",
-          "agentType": "explorer",
-          "description": "Locate every consumer of the face DTO across link-engine so new fields cannot break deserialization",
-          "spawnDepth": 1,
-          "model": "claude-haiku-4-5",
-          "state": "active",
-          "tokens": {
-            "input": 3908,
-            "output": 173392,
-            "cacheRead": 3477696,
-            "cacheCreation": 24264
-          },
-          "summary": "Grepping engine",
-          "lastActivityAt": 1761134356000
-        },
-        {
-          "agentId": "e061b2c3d4e5f6a7b",
-          "agentType": "security-auditor",
-          "description": "Audit the ingest worker entry point for path traversal when an archive carries absolute member names",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 14312,
-            "output": 63056,
-            "cacheRead": 6000960,
-            "cacheCreation": 540336
-          },
-          "summary": "Checking traversal",
-          "lastActivityAt": 1761134348000
-        },
-        {
-          "agentId": "e071b2c3d4e5f6a7b",
-          "agentType": "general-purpose",
-          "description": "Summarise the forty previously-fixed ingest defects that this sweep must re-check",
-          "spawnDepth": 1,
-          "model": null,
-          "state": "active",
-          "tokens": {
-            "input": 43960,
-            "output": 90480,
-            "cacheRead": 6902336,
-            "cacheCreation": 500112
-          },
-          "summary": "Listing defects",
-          "lastActivityAt": 1761134339000
-        },
-        {
-          "agentId": "e081b2c3d4e5f6a7b",
-          "agentType": "qa-critic",
-          "description": "Drive the Temporal worker against a thin archive and confirm the golden manifest still matches",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 43104,
-            "output": 65680,
-            "cacheRead": 1583033,
-            "cacheCreation": 87936
-          },
-          "summary": "Running worker",
-          "lastActivityAt": 1761134330000
-        },
-        {
-          "agentId": "e091b2c3d4e5f6a7b",
-          "agentType": "builder",
-          "description": "Emit a structlog record for every item the adapter drops so silent evidence loss becomes visible",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 40504,
-            "output": 2496,
-            "cacheRead": 3584128,
-            "cacheCreation": 326328
-          },
-          "summary": "Adding structlog",
-          "lastActivityAt": 1761134321000
-        },
-        {
-          "agentId": "e101b2c3d4e5f6a7b",
-          "agentType": "explorer",
-          "description": "Trace how pgvector embeddings are written during ingest and when they become queryable",
-          "spawnDepth": 1,
-          "model": "claude-haiku-4-5",
-          "state": "active",
-          "tokens": {
-            "input": 33004,
-            "output": 78496,
-            "cacheRead": 694592,
-            "cacheCreation": 237408
-          },
-          "summary": "Reading embeddings",
-          "lastActivityAt": 1761134312000
-        },
-        {
-          "agentId": "e111b2c3d4e5f6a7b",
-          "agentType": "reviewer",
-          "description": "Review the structlog change for bare except clauses and missing type hints",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 3692,
-            "output": 14832,
-            "cacheRead": 7354176,
-            "cacheCreation": 441896
-          },
-          "summary": "Two nits",
-          "lastActivityAt": 1761134303000
-        },
-        {
-          "agentId": "e121b2c3d4e5f6a7b",
-          "agentType": "planner",
-          "description": "Plan the pytest suite that will replay this validation in CI with no agent involved",
-          "spawnDepth": 1,
-          "model": "claude-opus-4-7",
-          "state": "active",
-          "tokens": {
-            "input": 36900,
-            "output": 41280,
-            "cacheRead": 1990528,
-            "cacheCreation": 59776
-          },
-          "summary": "Drafting suite",
-          "lastActivityAt": 1761134294000
-        },
-        {
-          "agentId": "e131b2c3d4e5f6a7b",
-          "agentType": "builder",
-          "description": "Write the golden manifest writer and its unit tests",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "active",
-          "tokens": {
-            "input": 37848,
-            "output": 165488,
-            "cacheRead": 4770304,
-            "cacheCreation": 473400
-          },
-          "summary": "Writing manifest",
-          "lastActivityAt": 1761134285000
-        },
-        {
-          "agentId": "ef01a2b3c4d5e6f0",
-          "agentType": "explorer",
-          "description": "Check whether the Axon adapter shares the dropped-item path",
-          "spawnDepth": 1,
-          "model": "claude-haiku-4-5",
-          "state": "finished",
-          "tokens": {
-            "input": 4572,
-            "output": 127881,
-            "cacheRead": 821376,
-            "cacheCreation": 131584
-          },
-          "summary": "Shared path",
-          "lastActivityAt": 1761133000000
-        },
-        {
-          "agentId": "ef12b3c4d5e6f001",
-          "agentType": "builder",
-          "description": "Add the first balance-sheet bucket for skipped chat threads",
-          "spawnDepth": 1,
-          "model": "claude-sonnet-5-5",
-          "state": "finished",
-          "tokens": {
-            "input": 51016,
-            "output": 123200,
-            "cacheRead": 6695936,
-            "cacheCreation": 406672
-          },
-          "summary": "Bucket added",
-          "lastActivityAt": 1761132600000
-        },
-        {
-          "agentId": "ef23c4d5e6f00112",
-          "agentType": "qa-critic",
-          "description": "Replay the opioids case against the previous manifest",
-          "spawnDepth": 2,
-          "model": "claude-sonnet-5-5",
-          "state": "finished",
-          "tokens": {
-            "input": 53512,
-            "output": 33296,
-            "cacheRead": 7254976,
-            "cacheCreation": 575104
-          },
-          "summary": "Manifest stale",
-          "lastActivityAt": 1761132200000
-        }
-      ]
-    },
-    {
-      "sessionId": "e41f09d6-85a3-4c27-a0d9-3b6c1f7e8004",
-      "pid": 44502,
       "cwd": "/Users/devshah/Desktop/projects/Harness",
       "project": "Harness",
       "workspace": null,
-      "name": "monitor dashboard",
-      "status": "idle",
-      "waitingFor": null,
-      "statusUpdatedAt": 1761134352000,
-      "startedAt": 1761131000000,
-      "model": "claude-sonnet-5-5",
+      "name": "NOTINBOX-session-name-one",
+      "taskTitle": "NOTINBOX-task-title-one",
+      "taskTitleSource": "active-agent",
+      "goal": "Rebuild the monitor around task boxes",
+      "goalSource": "inferred",
+      "status": "waiting",
+      "waitingFor": "NOTINBOX-waiting-for",
+      "statusUpdatedAt": 1761135400000,
+      "startedAt": 1761130000000,
+      "model": "claude-NOTINBOX-opus-5",
       "version": "2.1.118",
-      "effort": "medium",
-      "gitBranch": "main",
-      "pendingBackgroundAgents": 0,
+      "effort": "high",
+      "gitBranch": "NOTINBOX-branch/task-boxes",
+      "pendingBackgroundAgents": 2,
       "tokens": {
-        "input": 22040,
-        "output": 96210,
-        "cacheRead": 5840020,
-        "cacheCreation": 402880
+        "input": 7654321,
+        "output": 15308642,
+        "cacheRead": 306172840,
+        "cacheCreation": 22962963
       },
-      "lastTurnDurationMs": 128400,
-      "currentTurnStartedAt": null,
-      "summary": "Dashboard drafted",
+      "lastTurnDurationMs": 9240,
+      "currentTurnStartedAt": 1761135200000,
+      "summary": "NOTINBOX-session-summary",
       "agents": [
         {
-          "agentId": "d92c61a4e07f4b08",
-          "agentType": "general-purpose",
-          "description": "Survey the session registry files",
-          "spawnDepth": 1,
-          "model": null,
+          "agentId": "a1h1",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Replace the session card markup with one bordered region per session",
+          "spawnDepth": 2,
+          "spawnedAt": 1761131060000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "finished",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761131120000
+        },
+        {
+          "agentId": "a1h2",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Draw the helper connectors in CSS from the existing line colour variable",
+          "spawnDepth": 2,
+          "spawnedAt": 1761131120000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "finished",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761131180000
+        },
+        {
+          "agentId": "a1h3",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Strip every field from a box except its work text",
+          "spawnDepth": 3,
+          "spawnedAt": 1761131180000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "finished",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761131240000
+        },
+        {
+          "agentId": "a2h1",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Audit the connector geometry at every nesting depth",
+          "spawnDepth": 2,
+          "spawnedAt": 1761134060000,
+          "model": "claude-NOTINBOX-haiku-4-5",
           "state": "active",
           "tokens": {
-            "input": 7184,
-            "output": 82176,
-            "cacheRead": 8476864,
-            "cacheCreation": 499008
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
           },
-          "summary": "Schema mapped",
-          "lastActivityAt": null
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761134120000
+        },
+        {
+          "agentId": "a2h2",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Re-measure the rail so siblings in a row join into one line",
+          "spawnDepth": 2,
+          "spawnedAt": 1761134120000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "active",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761134180000
+        },
+        {
+          "agentId": "a2h3",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Check the deepest helper box still fits inside a 375px viewport",
+          "spawnDepth": 2,
+          "spawnedAt": 1761134180000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "active",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761134240000
+        },
+        {
+          "agentId": "a2h4",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Verify both themes resolve after the box rewrite",
+          "spawnDepth": 2,
+          "spawnedAt": 1761134240000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "active",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761134300000
+        },
+        {
+          "agentId": "a2h5",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Prove the blinking dot leaves the measured height alone",
+          "spawnDepth": 2,
+          "spawnedAt": 1761134300000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "active",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761134360000
+        },
+        {
+          "agentId": "a2h6",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Collect the grid rules that the stacked layout retires",
+          "spawnDepth": 2,
+          "spawnedAt": 1761134360000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "finished",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761134420000
+        }
+      ],
+      "tasks": [
+        {
+          "taskId": "task-1761131000000",
+          "startedAt": 1761131000000,
+          "title": "Implement the task-box renderer end to end",
+          "titleSource": "agent",
+          "main": {
+            "kind": "agent",
+            "agentId": "a1main",
+            "state": "finished"
+          },
+          "agents": [
+            {
+              "agentId": "a1h1",
+              "parentAgentId": null,
+              "description": "Replace the session card markup with one bordered region per session",
+              "state": "finished",
+              "depth": 1
+            },
+            {
+              "agentId": "a1h2",
+              "parentAgentId": null,
+              "description": "Draw the helper connectors in CSS from the existing line colour variable",
+              "state": "finished",
+              "depth": 1
+            },
+            {
+              "agentId": "a1h3",
+              "parentAgentId": "a1h1",
+              "description": "Strip every field from a box except its work text",
+              "state": "finished",
+              "depth": 2
+            }
+          ]
+        },
+        {
+          "taskId": "task-1761134000000",
+          "startedAt": 1761134000000,
+          "title": "Stack the session borders and reshape every box",
+          "titleSource": "inferred",
+          "main": {
+            "kind": "session",
+            "agentId": null,
+            "state": "active"
+          },
+          "agents": [
+            {
+              "agentId": "a2h1",
+              "parentAgentId": null,
+              "description": "Audit the connector geometry at every nesting depth",
+              "state": "active",
+              "depth": 1
+            },
+            {
+              "agentId": "a2h2",
+              "parentAgentId": null,
+              "description": "Re-measure the rail so siblings in a row join into one line",
+              "state": "active",
+              "depth": 1
+            },
+            {
+              "agentId": "a2h3",
+              "parentAgentId": null,
+              "description": "Check the deepest helper box still fits inside a 375px viewport",
+              "state": "active",
+              "depth": 1
+            },
+            {
+              "agentId": "a2h4",
+              "parentAgentId": null,
+              "description": "Verify both themes resolve after the box rewrite",
+              "state": "active",
+              "depth": 1
+            },
+            {
+              "agentId": "a2h5",
+              "parentAgentId": null,
+              "description": "Prove the blinking dot leaves the measured height alone",
+              "state": "active",
+              "depth": 1
+            },
+            {
+              "agentId": "a2h6",
+              "parentAgentId": null,
+              "description": "Collect the grid rules that the stacked layout retires",
+              "state": "finished",
+              "depth": 1
+            }
+          ]
         }
       ]
+    },
+    {
+      "sessionId": "6f1c2a9e-41b7-4d0e-8a55-0c3b7e21d002",
+      "pid": 48212,
+      "cwd": "/Users/devshah/Desktop/projects/Harness",
+      "project": "Harness",
+      "workspace": null,
+      "name": "NOTINBOX-session-name-two",
+      "taskTitle": "NOTINBOX-task-title-two",
+      "taskTitleSource": "active-agent",
+      "goal": "Refresh the repository README",
+      "goalSource": "inferred",
+      "status": "busy",
+      "waitingFor": "NOTINBOX-waiting-for",
+      "statusUpdatedAt": 1761133400000,
+      "startedAt": 1761128000000,
+      "model": "claude-NOTINBOX-opus-5",
+      "version": "2.1.118",
+      "effort": "high",
+      "gitBranch": "NOTINBOX-branch/task-boxes",
+      "pendingBackgroundAgents": 2,
+      "tokens": {
+        "input": 7654321,
+        "output": 15308642,
+        "cacheRead": 306172840,
+        "cacheCreation": 22962963
+      },
+      "lastTurnDurationMs": 9240,
+      "currentTurnStartedAt": 1761133200000,
+      "summary": "NOTINBOX-session-summary",
+      "agents": [
+        {
+          "agentId": "b2h1",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Walk the rendered page at 1280, 768 and 375 pixels in both the dark Matrix theme and the light theme, recording the measured width and height of every box so that no text is ever truncated",
+          "spawnDepth": 2,
+          "spawnedAt": 1761135060000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "active",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761135120000
+        },
+        {
+          "agentId": "b2h2",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Record the width and height of every box at 1280 pixels",
+          "spawnDepth": 3,
+          "spawnedAt": 1761135120000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "active",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761135180000
+        },
+        {
+          "agentId": "b2h3",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Record the same measurements at 768 and 375 pixels",
+          "spawnDepth": 3,
+          "spawnedAt": 1761135180000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "active",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761135240000
+        }
+      ],
+      "tasks": [
+        {
+          "taskId": "task-1761129000000",
+          "startedAt": 1761129000000,
+          "title": "Fix typo",
+          "titleSource": "inferred",
+          "main": {
+            "kind": "session",
+            "agentId": null,
+            "state": "active"
+          },
+          "agents": []
+        },
+        {
+          "taskId": "task-1761135000000",
+          "startedAt": 1761135000000,
+          "title": "Rewrite every box in the monitor as a fixed-width rectangle whose text wraps across several lines instead of stretching into a single full-width bar that spans the whole session border",
+          "titleSource": "agent",
+          "main": {
+            "kind": "agent",
+            "agentId": "b2main",
+            "state": "active"
+          },
+          "agents": [
+            {
+              "agentId": "b2h1",
+              "parentAgentId": null,
+              "description": "Walk the rendered page at 1280, 768 and 375 pixels in both the dark Matrix theme and the light theme, recording the measured width and height of every box so that no text is ever truncated",
+              "state": "active",
+              "depth": 1
+            },
+            {
+              "agentId": "b2h2",
+              "parentAgentId": "b2h1",
+              "description": "Record the width and height of every box at 1280 pixels",
+              "state": "active",
+              "depth": 2
+            },
+            {
+              "agentId": "b2h3",
+              "parentAgentId": "b2h1",
+              "description": "Record the same measurements at 768 and 375 pixels",
+              "state": "active",
+              "depth": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "sessionId": "6f1c2a9e-41b7-4d0e-8a55-0c3b7e21d003",
+      "pid": 48213,
+      "cwd": "/Users/devshah/Desktop/projects/Harness",
+      "project": "Harness",
+      "workspace": null,
+      "name": "NOTINBOX-session-name-three",
+      "taskTitle": "NOTINBOX-task-title-three",
+      "taskTitleSource": "active-agent",
+      "goal": "Retire the charts the monitor no longer shows",
+      "goalSource": "inferred",
+      "status": "idle",
+      "waitingFor": "NOTINBOX-waiting-for",
+      "statusUpdatedAt": 1761131400000,
+      "startedAt": 1761126000000,
+      "model": "claude-NOTINBOX-opus-5",
+      "version": "2.1.118",
+      "effort": "high",
+      "gitBranch": "NOTINBOX-branch/task-boxes",
+      "pendingBackgroundAgents": 2,
+      "tokens": {
+        "input": 7654321,
+        "output": 15308642,
+        "cacheRead": 306172840,
+        "cacheCreation": 22962963
+      },
+      "lastTurnDurationMs": 9240,
+      "currentTurnStartedAt": 1761131200000,
+      "summary": "NOTINBOX-session-summary",
+      "agents": [
+        {
+          "agentId": "c3h1",
+          "agentType": "NOTINBOX-agent-type",
+          "description": "Delete the retired chart panel markup",
+          "spawnDepth": 2,
+          "spawnedAt": 1761131060000,
+          "model": "claude-NOTINBOX-haiku-4-5",
+          "state": "active",
+          "tokens": {
+            "input": 12000,
+            "output": 24000,
+            "cacheRead": 480000,
+            "cacheCreation": 36000
+          },
+          "summary": "NOTINBOX-agent-summary",
+          "lastActivityAt": 1761131120000
+        }
+      ],
+      "tasks": [
+        {
+          "taskId": "task-1761127000000",
+          "startedAt": 1761127000000,
+          "title": "Retire the removed chart panels",
+          "titleSource": "inferred",
+          "main": {
+            "kind": "session",
+            "agentId": null,
+            "state": "finished"
+          },
+          "agents": []
+        },
+        {
+          "taskId": "task-1761131000001",
+          "startedAt": 1761131000001,
+          "title": "Delete the retired chart panel markup",
+          "titleSource": "sole-agent",
+          "main": {
+            "kind": "session",
+            "agentId": null,
+            "state": "active"
+          },
+          "agents": [
+            {
+              "agentId": "c3h1",
+              "parentAgentId": null,
+              "description": "Delete the retired chart panel markup",
+              "state": "active",
+              "depth": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "sessionId": "6f1c2a9e-41b7-4d0e-8a55-0c3b7e21d004",
+      "pid": 48214,
+      "cwd": "/Users/devshah/Desktop/projects/Harness",
+      "project": "Harness",
+      "workspace": null,
+      "name": "NOTINBOX-session-name-four",
+      "taskTitle": null,
+      "taskTitleSource": null,
+      "goal": "Stand by for the next instruction",
+      "goalSource": "inferred",
+      "status": "idle",
+      "waitingFor": null,
+      "statusUpdatedAt": 1761125400000,
+      "startedAt": 1761125000000,
+      "model": "claude-NOTINBOX-opus-5",
+      "version": "2.1.118",
+      "effort": "high",
+      "gitBranch": "NOTINBOX-branch/task-boxes",
+      "pendingBackgroundAgents": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheCreation": 0
+      },
+      "lastTurnDurationMs": 0,
+      "currentTurnStartedAt": null,
+      "summary": "NOTINBOX-session-summary",
+      "agents": [],
+      "tasks": []
     }
   ]
 }

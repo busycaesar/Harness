@@ -1,0 +1,24 @@
+#!/usr/bin/env node
+const fs = require('node:fs');
+
+const callsFile = process.env.FAKE_CLI_CALLS_FILE;
+const reply = process.env.FAKE_CLI_REPLY ?? 'Build a task monitoring dashboard';
+const exitCode = Number(process.env.FAKE_CLI_EXIT || 0);
+const delayMs = Number(process.env.FAKE_CLI_DELAY_MS || 0);
+
+function record(line) {
+  if (callsFile) fs.appendFileSync(callsFile, `${line}\n`);
+}
+
+let prompt = '';
+process.stdin.on('data', (chunk) => { prompt += chunk; });
+process.stdin.on('end', () => {
+  record(`start ${process.argv.slice(2).join(' ')} :: ${prompt.replace(/\n/g, '\\n')}`);
+  const noise = 'Client.listTools() called but server does not advertise tools capability - returning empty list';
+  setTimeout(() => {
+    process.stdout.write(`${reply}\n${noise}\n`, () => {
+      record('end');
+      process.exit(exitCode);
+    });
+  }, delayMs);
+});

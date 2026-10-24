@@ -5,8 +5,6 @@ const { summarizeToolUse } = require('./tool-summary');
 const { emptyState } = require('./transcript-reader');
 
 const META_FILE_PATTERN = /^agent-(.+)\.meta\.json$/;
-const FINISHED_AFTER_IDLE_MS = 60000;
-const END_TURN = 'end_turn';
 
 function listAgentIds(directory) {
   try {
@@ -20,22 +18,32 @@ function listAgentIds(directory) {
   }
 }
 
-function agentState(transcript, nowMs) {
-  if (!transcript) return 'active';
-  const endedTurn = transcript.state.lastStopReason === END_TURN;
-  const idleTooLong = nowMs - transcript.modifiedAtMs > FINISHED_AFTER_IDLE_MS;
-  return endedTurn || idleTooLong ? 'finished' : 'active';
+// an agent that never reaches a terminal stop reason leaves no trace of its death, so the session
+// is asked instead: a turn it ended after the agent fell silent, carrying no pending agents, buries it
+function sessionOutlivedAgent(sessionState, lastActivityAt) {
+  if (sessionState.pendingBackgroundAgents !== 0) return false;
+  if (sessionState.pendingBackgroundAgentsAt === null || lastActivityAt === null) return false;
+  return sessionState.pendingBackgroundAgentsAt > lastActivityAt;
 }
 
-function describeAgent(agentId, { meta, spawnedAt }, transcript, nowMs) {
-  const state = agentState(transcript, nowMs);
+function agentState(transcript, sessionState) {
+  if (!transcript) return 'active';
+  if (!transcript.state.running) return 'finished';
+  return sessionOutlivedAgent(sessionState, transcript.state.lastActivityAt) ? 'finished' : 'active';
+}
+
+function describeAgent(agentId, { meta, spawnedAt }, transcript, sessionState) {
+  const state = agentState(transcript, sessionState);
   const transcriptState = transcript ? transcript.state : null;
   return {
     agentId,
     agentType: typeof meta.agentType === 'string' ? meta.agentType : '',
     description: typeof meta.description === 'string' ? meta.description : '',
+    toolUseId: typeof meta.toolUseId === 'string' ? meta.toolUseId : '',
+    parentAgentId: typeof meta.parentAgentId === 'string' ? meta.parentAgentId : '',
     spawnDepth: Number.isFinite(meta.spawnDepth) ? meta.spawnDepth : 0,
     spawnedAt,
+    spawnedToolUseIds: (transcriptState || emptyState()).spawnedToolUseIds,
     model: transcriptState ? transcriptState.model : null,
     state,
     tokens: { ...(transcriptState || emptyState()).tokens },
@@ -58,7 +66,7 @@ function spawnTimeOf(metaPath) {
   }
 }
 
-function createSubagentReader({ transcriptReader, nowMs }) {
+function createSubagentReader({ transcriptReader }) {
   const metaByPath = new Map();
 
   // the meta file is written once, when the agent is spawned, so its mtime is the spawn time
@@ -71,13 +79,13 @@ function createSubagentReader({ transcriptReader, nowMs }) {
     return entry;
   }
 
-  return function readSubagents(directory) {
+  return function readSubagents(directory, sessionState) {
     const agents = [];
     for (const agentId of listAgentIds(directory)) {
       const entry = metaFor(path.join(directory, `agent-${agentId}.meta.json`));
       if (!entry) continue;
       const transcript = transcriptReader.read(path.join(directory, `agent-${agentId}.jsonl`));
-      agents.push(describeAgent(agentId, entry, transcript, nowMs()));
+      agents.push(describeAgent(agentId, entry, transcript, sessionState));
     }
     return agents.sort(compareAgents);
   };

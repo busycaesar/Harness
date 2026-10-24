@@ -6,14 +6,27 @@ const { createSubagentReader } = require('./subagents');
 const { summarizeToolUse } = require('./tool-summary');
 const { createRepoRootResolver, workspaceOf } = require('./repo-root');
 const { resolveTaskTitle } = require('./task-title');
+const { buildAgentTree, groupIntoTasks, mainBoxOf } = require('./tasks');
 
 const IDLE_STATUS = 'idle';
 const WAITING_STATUS = 'waiting';
+const BUSY_STATUS = 'busy';
+const SESSION_WORKING_STATUSES = new Set([BUSY_STATUS, WAITING_STATUS]);
+const ACTIVE_STATE = 'active';
+const FINISHED_STATE = 'finished';
+const AGENT_TITLE_SOURCE = 'agent';
+const INFERRED_TITLE_SOURCE = 'inferred';
+const SOLE_AGENT_TITLE_SOURCE = 'sole-agent';
+const FIRST_AGENT_TITLE_SOURCE = 'first-agent';
+const NO_TITLE = { title: null, titleSource: null };
+const SOLE_AGENT_COUNT = 1;
+const TASK_MINIMUM_DESCRIPTIONS = 1;
+const FIRST_HELPER_DEPTH = 1;
 
 function reportedStatus(record) {
   if (record.status === IDLE_STATUS) return IDLE_STATUS;
   if (record.status === WAITING_STATUS) return WAITING_STATUS;
-  return 'busy';
+  return BUSY_STATUS;
 }
 
 function summarizeSession(record, transcriptState) {
@@ -22,7 +35,78 @@ function summarizeSession(record, transcriptState) {
   return summarizeToolUse(transcriptState.lastToolUse);
 }
 
-function describeSession(record, repoRoot, transcriptState, agents) {
+function spawnerSetsOf(agents) {
+  return new Map(agents.map((agent) => [agent.agentId, agent.spawnedToolUseIds]));
+}
+
+function isWorkedOnBySession(isMostRecentTask, sessionStatus) {
+  return isMostRecentTask && SESSION_WORKING_STATUSES.has(sessionStatus);
+}
+
+function taskStateOf(task) {
+  if (task.isWorkedOnBySession) return ACTIVE_STATE;
+  return task.agents.every((agent) => agent.state === FINISHED_STATE) ? FINISHED_STATE : ACTIVE_STATE;
+}
+
+// a single-helper task never reaches the goal resolver's old two-description minimum, so without this
+// fallback its box would render with no text at all
+function describedAgentTitle(task) {
+  const described = task.agents.find((agent) => agent.description !== '');
+  if (described === undefined) return NO_TITLE;
+  const titleSource = task.agents.length === SOLE_AGENT_COUNT ? SOLE_AGENT_TITLE_SOURCE : FIRST_AGENT_TITLE_SOURCE;
+  return { title: described.description, titleSource };
+}
+
+function titleOf(mainAgent, task, resolveTitle) {
+  if (mainAgent !== null) return { title: mainAgent.description, titleSource: AGENT_TITLE_SOURCE };
+  const descriptions = task.agents.map((agent) => agent.description);
+  const inferred = resolveTitle(task.taskId, descriptions, { minimumDescriptions: TASK_MINIMUM_DESCRIPTIONS });
+  if (typeof inferred === 'string' && inferred !== '') return { title: inferred, titleSource: INFERRED_TITLE_SOURCE };
+  return describedAgentTitle(task);
+}
+
+// a helper whose spawner belongs to an earlier task hangs off the main box, so a task stays self-contained
+function placeHelper(agent, parentOf, depthByAgentId) {
+  const spawnerAgentId = parentOf.get(agent.agentId);
+  const parentAgentId = depthByAgentId.has(spawnerAgentId) ? spawnerAgentId : null;
+  const depth = parentAgentId === null ? FIRST_HELPER_DEPTH : depthByAgentId.get(parentAgentId) + 1;
+  depthByAgentId.set(agent.agentId, depth);
+  return { agentId: agent.agentId, parentAgentId, description: agent.description, state: agent.state, depth };
+}
+
+function helpersOf(task, parentOf) {
+  const depthByAgentId = new Map();
+  return task.agents
+    .filter((agent) => agent.agentId !== task.main.agentId)
+    .map((agent) => placeHelper(agent, parentOf, depthByAgentId));
+}
+
+function describeTask(task, parentOf, resolveTitle) {
+  const mainAgent = task.agents.find((agent) => agent.agentId === task.main.agentId) || null;
+  return {
+    taskId: task.taskId,
+    startedAt: task.startedAt,
+    ...titleOf(mainAgent, task, resolveTitle),
+    main: { ...task.main, state: taskStateOf(task) },
+    agents: helpersOf(task, parentOf),
+  };
+}
+
+function describeTasks(agents, promptAts, resolveTitle, sessionStatus) {
+  const parentOf = buildAgentTree(agents, spawnerSetsOf(agents));
+  const agentById = new Map(agents.map((agent) => [agent.agentId, agent]));
+  const grouped = groupIntoTasks(agents, promptAts, parentOf);
+  const mostRecentIndex = grouped.length - 1;
+  return grouped.map((task, index) => describeTask({
+    taskId: task.taskId,
+    startedAt: task.startedAt,
+    main: mainBoxOf(task, parentOf),
+    agents: task.agentIds.map((agentId) => agentById.get(agentId)),
+    isWorkedOnBySession: isWorkedOnBySession(index === mostRecentIndex, sessionStatus),
+  }, parentOf, resolveTitle));
+}
+
+function describeSession(record, repoRoot, transcriptState, agents, goal, tasks) {
   const status = reportedStatus(record);
   const { taskTitle, taskTitleSource } = resolveTaskTitle(agents, transcriptState);
   return {
@@ -34,6 +118,8 @@ function describeSession(record, repoRoot, transcriptState, agents) {
     name: typeof record.name === 'string' ? record.name : '',
     taskTitle,
     taskTitleSource,
+    goal,
+    goalSource: goal === null ? taskTitleSource : 'inferred',
     status,
     waitingFor: record.status === WAITING_STATUS && typeof record.waitingFor === 'string' ? record.waitingFor : null,
     statusUpdatedAt: record.statusUpdatedAt,
@@ -48,6 +134,7 @@ function describeSession(record, repoRoot, transcriptState, agents) {
     currentTurnStartedAt: status === IDLE_STATUS ? null : transcriptState.lastPromptAt,
     summary: summarizeSession(record, transcriptState),
     agents,
+    tasks,
   };
 }
 
@@ -75,16 +162,24 @@ function summarizeProjects(sessions, repoRootOf) {
   return projects.sort((left, right) => left.name.localeCompare(right.name));
 }
 
-function createSnapshotBuilder({ claudeDir, isAlive = isPidAlive, nowMs = Date.now }) {
+function createSnapshotBuilder({
+  claudeDir,
+  isAlive = isPidAlive,
+  nowMs = Date.now,
+  resolveGoal = () => null,
+  resolveTitle = () => null,
+}) {
   const transcriptReader = createTranscriptReader();
-  const readSubagents = createSubagentReader({ transcriptReader, nowMs });
+  const readSubagents = createSubagentReader({ transcriptReader });
   const repoRootOf = createRepoRootResolver();
 
   function describeLiveSession(record) {
     const transcript = transcriptReader.read(transcriptPath(claudeDir, record.cwd, record.sessionId));
     const transcriptState = transcript ? transcript.state : emptyState();
-    const agents = readSubagents(subagentsDirectory(claudeDir, record.cwd, record.sessionId));
-    return describeSession(record, repoRootOf(record.cwd), transcriptState, agents);
+    const agents = readSubagents(subagentsDirectory(claudeDir, record.cwd, record.sessionId), transcriptState);
+    const goal = resolveGoal(record.sessionId, agents);
+    const tasks = describeTasks(agents, transcriptState.promptAts, resolveTitle, reportedStatus(record));
+    return describeSession(record, repoRootOf(record.cwd), transcriptState, agents, goal, tasks);
   }
 
   return function buildSnapshot() {

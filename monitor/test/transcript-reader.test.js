@@ -13,7 +13,19 @@ const {
   usageOf,
   writeTranscript,
   appendToTranscript,
+  turnDurationLine,
 } = require('./helpers');
+
+const FIRST_PROMPT_AT = Date.parse('2026-01-01T00:00:00.000Z');
+const ONE_SECOND_MS = 1000;
+
+function promptTimestampAt(index) {
+  return new Date(FIRST_PROMPT_AT + index * ONE_SECOND_MS).toISOString();
+}
+
+function agentToolUseBlock(id) {
+  return { type: 'tool_use', id, name: 'Agent', input: { description: 'do the subtask' } };
+}
 
 function withTranscript(run) {
   const directory = makeTempDirectory();
@@ -140,6 +152,64 @@ test('tracks the latest prompt, and a tool result does not start a new turn', ()
   });
 });
 
+test('records every prompt timestamp in ascending order', () => {
+  withTranscript((file, reader) => {
+    const stamps = ['2026-01-01T00:00:10.000Z', '2026-01-01T00:00:20.000Z', '2026-01-01T00:00:30.000Z'];
+    writeTranscript(file, stamps.map((stamp) => promptLine(stamp)));
+    const { state } = reader.read(file);
+    assert.deepEqual(state.promptAts, stamps.map((stamp) => Date.parse(stamp)));
+  });
+});
+
+test('keeps only the most recent 200 prompt timestamps', () => {
+  withTranscript((file, reader) => {
+    const stamps = Array.from({ length: 205 }, (_, index) => promptTimestampAt(index));
+    writeTranscript(file, stamps.map((stamp) => promptLine(stamp)));
+    const { state } = reader.read(file);
+    assert.equal(state.promptAts.length, 200);
+    assert.equal(state.promptAts[0], Date.parse(stamps[5]));
+    assert.equal(state.promptAts.at(-1), Date.parse(stamps.at(-1)));
+  });
+});
+
+test('records the tool use id of a spawned agent', () => {
+  withTranscript((file, reader) => {
+    writeTranscript(file, [
+      assistantLine({ id: 'm1', usage: usageOf(1, 1), blocks: [agentToolUseBlock('toolu_spawn_one')] }),
+    ]);
+    assert.deepEqual([...reader.read(file).state.spawnedToolUseIds], ['toolu_spawn_one']);
+  });
+});
+
+test('ignores tool uses that do not spawn an agent', () => {
+  withTranscript((file, reader) => {
+    writeTranscript(file, [
+      assistantLine({ id: 'm1', usage: usageOf(1, 1), blocks: [toolUseBlock('Bash'), toolUseBlock('Read')] }),
+    ]);
+    assert.equal(reader.read(file).state.spawnedToolUseIds.size, 0);
+  });
+});
+
+test('accumulates prompt timestamps and spawned ids across incremental reads', () => {
+  withTranscript((file, reader) => {
+    writeTranscript(file, [
+      promptLine('2026-01-01T00:00:10.000Z'),
+      assistantLine({ id: 'm1', usage: usageOf(1, 1), blocks: [agentToolUseBlock('toolu_spawn_one')] }),
+    ]);
+    reader.read(file);
+    appendToTranscript(file, [
+      promptLine('2026-01-01T00:00:40.000Z'),
+      assistantLine({ id: 'm2', usage: usageOf(1, 1), blocks: [agentToolUseBlock('toolu_spawn_two')] }),
+    ]);
+    const { state } = reader.read(file);
+    assert.deepEqual(state.promptAts, [
+      Date.parse('2026-01-01T00:00:10.000Z'),
+      Date.parse('2026-01-01T00:00:40.000Z'),
+    ]);
+    assert.deepEqual([...state.spawnedToolUseIds], ['toolu_spawn_one', 'toolu_spawn_two']);
+  });
+});
+
 test('records turn duration, pending background agents, branch and effort', () => {
   withTranscript((file, reader) => {
     writeTranscript(file, [
@@ -150,5 +220,27 @@ test('records turn duration, pending background agents, branch and effort', () =
     assert.equal(state.pendingBackgroundAgents, 2);
     assert.equal(state.gitBranch, 'main');
     assert.equal(state.effort, 'high');
+  });
+});
+
+test('pending background agents fall back to none when a later turn omits the count', () => {
+  withTranscript((file, reader) => {
+    writeTranscript(file, [turnDurationLine('2026-01-01T00:01:00.000Z', { pendingBackgroundAgentCount: 3 })]);
+    assert.equal(reader.read(file).state.pendingBackgroundAgents, 3);
+    appendToTranscript(file, [turnDurationLine('2026-01-01T00:02:00.000Z')]);
+    const { state } = reader.read(file);
+    assert.equal(state.pendingBackgroundAgents, 0);
+    assert.equal(state.pendingBackgroundAgentsAt, Date.parse('2026-01-01T00:02:00.000Z'));
+  });
+});
+
+test('a turn is open until an assistant line reaches a terminal stop reason, and reopens on new input', () => {
+  withTranscript((file, reader) => {
+    writeTranscript(file, [assistantLine({ id: 'm1', usage: usageOf(1, 1), blocks: [toolUseBlock('Bash')] })]);
+    assert.equal(reader.read(file).state.running, true);
+    appendToTranscript(file, [assistantLine({ id: 'm2', usage: usageOf(1, 1), stopReason: 'end_turn' })]);
+    assert.equal(reader.read(file).state.running, false);
+    appendToTranscript(file, [promptLine('2026-01-01T00:03:00.000Z')]);
+    assert.equal(reader.read(file).state.running, true);
   });
 });

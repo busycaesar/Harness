@@ -88,10 +88,41 @@ function sessionDirectoryFor(claudeDir, record) {
 function writeSubagent(claudeDir, record, agentId, meta, transcriptRecords) {
   const directory = path.join(sessionDirectoryFor(claudeDir, record), record.sessionId, 'subagents');
   fs.mkdirSync(directory, { recursive: true });
-  fs.writeFileSync(path.join(directory, `agent-${agentId}.meta.json`), JSON.stringify(meta));
+  const metaFile = path.join(directory, `agent-${agentId}.meta.json`);
+  fs.writeFileSync(metaFile, JSON.stringify(meta));
   const transcriptFile = path.join(directory, `agent-${agentId}.jsonl`);
   if (transcriptRecords) writeTranscript(transcriptFile, transcriptRecords);
-  return transcriptFile;
+  return metaFile;
+}
+
+function setSpawnTime(metaFile, whenMs) {
+  fs.utimesSync(metaFile, new Date(whenMs), new Date(whenMs));
+  return metaFile;
+}
+
+function aiTitleLine(title) {
+  return { type: 'ai-title', aiTitle: title };
+}
+
+function turnDurationLine(timestamp, { durationMs = 1000, pendingBackgroundAgentCount } = {}) {
+  const record = { type: 'system', subtype: 'turn_duration', durationMs, timestamp };
+  if (pendingBackgroundAgentCount !== undefined) record.pendingBackgroundAgentCount = pendingBackgroundAgentCount;
+  return record;
+}
+
+function taskNotificationLine(timestamp, agentId, status) {
+  const text = [
+    '[SYSTEM NOTIFICATION - NOT USER INPUT]',
+    '<task-notification>',
+    `<task-id>${agentId}</task-id>`,
+    `<status>${status}</status>`,
+    '</task-notification>',
+  ].join('\n');
+  return { type: 'user', timestamp, message: { role: 'user', content: text } };
+}
+
+function setModifiedTime(filePath, whenMs) {
+  fs.utimesSync(filePath, new Date(whenMs), new Date(whenMs));
 }
 
 module.exports = {
@@ -108,4 +139,9 @@ module.exports = {
   sessionRecord,
   sessionDirectoryFor,
   writeSubagent,
+  setSpawnTime,
+  aiTitleLine,
+  turnDurationLine,
+  taskNotificationLine,
+  setModifiedTime,
 };

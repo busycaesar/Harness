@@ -3,6 +3,9 @@ const { describeToolUse } = require('./tool-summary');
 
 const NEWLINE_BYTE = 0x0a;
 const SYNTHETIC_MODEL = '<synthetic>';
+const TERMINAL_STOP_REASONS = new Set(['end_turn', 'stop_sequence', 'max_tokens', 'refusal']);
+const SPAWN_TOOL_NAME = 'Agent';
+const MAX_PROMPT_TIMESTAMPS = 200;
 
 function emptyState() {
   return {
@@ -11,11 +14,14 @@ function emptyState() {
     gitBranch: null,
     effort: null,
     pendingBackgroundAgents: null,
+    pendingBackgroundAgentsAt: null,
     lastTurnDurationMs: null,
     lastToolUse: null,
     lastPromptAt: null,
-    lastStopReason: null,
+    promptAts: [],
+    spawnedToolUseIds: new Set(),
     lastActivityAt: null,
+    running: false,
     aiTitle: null,
   };
 }
@@ -56,9 +62,13 @@ function applyAssistantLine(entry, record) {
     if (messageKey) entry.countedMessageKeys.add(messageKey);
   }
   if (typeof message.model === 'string' && message.model !== SYNTHETIC_MODEL) state.model = message.model;
-  state.lastStopReason = message.stop_reason || null;
+  state.running = !TERMINAL_STOP_REASONS.has(message.stop_reason);
   for (const block of contentBlocks(message)) {
-    if (block && block.type === 'tool_use') state.lastToolUse = describeToolUse(block);
+    if (!block || block.type !== 'tool_use') continue;
+    state.lastToolUse = describeToolUse(block);
+    if (block.name === SPAWN_TOOL_NAME && typeof block.id === 'string' && block.id) {
+      state.spawnedToolUseIds.add(block.id);
+    }
   }
 }
 
@@ -69,19 +79,33 @@ function isPromptLine(record) {
   return !contentBlocks(message).some((block) => block && block.type === 'tool_result');
 }
 
+function recordPromptAt(promptAts, timestamp) {
+  if (timestamp === null) return;
+  promptAts.push(timestamp);
+  if (promptAts.length > MAX_PROMPT_TIMESTAMPS) promptAts.splice(0, promptAts.length - MAX_PROMPT_TIMESTAMPS);
+}
+
 function applyUserLine(state, record) {
+  state.running = true;
   if (!isPromptLine(record)) return;
-  state.lastPromptAt = parseTimestamp(record.timestamp);
+  const promptAt = parseTimestamp(record.timestamp);
+  state.lastPromptAt = promptAt;
+  recordPromptAt(state.promptAts, promptAt);
   state.lastToolUse = null;
-  state.lastStopReason = null;
+}
+
+// the count is written only while agents are pending, so a turn that ends without it reports none left
+function applyTurnDurationLine(state, record) {
+  state.lastTurnDurationMs = Number.isFinite(record.durationMs) ? record.durationMs : null;
+  const reported = Number.isFinite(record.pendingBackgroundAgentCount) ? record.pendingBackgroundAgentCount : null;
+  if (reported === null && state.pendingBackgroundAgents === null) return;
+  state.pendingBackgroundAgents = reported === null ? 0 : reported;
+  state.pendingBackgroundAgentsAt = parseTimestamp(record.timestamp);
 }
 
 function applySharedFields(state, record) {
   if (typeof record.gitBranch === 'string' && record.gitBranch) state.gitBranch = record.gitBranch;
   if (typeof record.effort === 'string' && record.effort) state.effort = record.effort;
-  if (Number.isFinite(record.pendingBackgroundAgentCount)) {
-    state.pendingBackgroundAgents = record.pendingBackgroundAgentCount;
-  }
   const timestamp = parseTimestamp(record.timestamp);
   if (timestamp !== null) state.lastActivityAt = timestamp;
 }
@@ -91,9 +115,8 @@ function applyRecord(entry, record) {
   applySharedFields(state, record);
   if (record.type === 'assistant') applyAssistantLine(entry, record);
   else if (record.type === 'user') applyUserLine(state, record);
-  else if (record.type === 'system' && record.subtype === 'turn_duration') {
-    state.lastTurnDurationMs = Number.isFinite(record.durationMs) ? record.durationMs : null;
-  } else if (record.type === 'ai-title' && typeof record.aiTitle === 'string' && record.aiTitle) {
+  else if (record.type === 'system' && record.subtype === 'turn_duration') applyTurnDurationLine(state, record);
+  else if (record.type === 'ai-title' && typeof record.aiTitle === 'string' && record.aiTitle) {
     state.aiTitle = record.aiTitle;
   }
 }
@@ -168,7 +191,7 @@ function createTranscriptReader() {
       entries.delete(filePath);
       return null;
     }
-    return { state: entry.state, modifiedAtMs: stats.mtimeMs };
+    return { state: entry.state };
   }
 
   function startSweep() {
