@@ -1,6 +1,6 @@
-# Monitor: independent areas of work
+# Monitor: task-based boxes
 
-Status: draft
+Status: final
 
 ## Source requirements
 
@@ -25,78 +25,117 @@ Each box only shows the task that its performing.
 
 Even if the whole task is done, keep the box there. Add a cross at the top left corner if the boxes of the tasks which are done.
 
+### Clarification given during specification
+
+"Now the box is based on the task. Task A: Whoever does that task, actively working on it, is the main box on the monitor. This box says the work its doing. If this spins up a subagent which helps it complete Task A, that box has the information on what its working on. This box is connected with the main box. Even when the task is complete, the main agent box is still there on the screen. If I give it Task B, then a new main agent box will be added. The old box for Task A is still there. So now, we are tracking task rather than real time session information."
+
 ## Goal
 
-Restructure the monitor UI so each session is a bordered region containing one box per independent area of work, with each area's subagent boxes connected to the box driving that area, and finished work staying visible rather than disappearing.
+Turn the monitor from a live view of sessions into a record of tasks: each session is a bordered region that accumulates one main box per task given to it, with the helper agents for that task connected beneath it, and nothing ever disappearing once it has appeared.
 
 ## Requirements
 
 ### R1 — A session is a bordered region
 
-Each live session renders as a bordered region on the page. Boxes belonging to that session render inside its border.
+Each live session renders as a bordered region. Every box belonging to that session renders inside its border.
 
 Acceptance criteria:
 
 - R1.AC1 — Given two live sessions, when the page renders, then two separate bordered regions appear.
-- R1.AC2 — Given a box belonging to session A, when the page renders, then that box appears inside session A's border and not inside any other session's border.
+- R1.AC2 — Given a box belonging to session A, when the page renders, then it appears inside session A's border and no other.
+- R1.AC3 — Given a session, when the page renders, then its border carries the session's inferred goal as a quiet label. (Source: D5)
+- R1.AC4 — Given two or more live sessions, when the page renders, then their borders are stacked vertically, one per row, each spanning the page width. (Source: D8)
 
-### R2 — Boxes show only the task
+### R2 — One main box per task
 
-Every box shows only the task its agent is performing, and no other field.
-
-Acceptance criteria:
-
-- R2.AC1 — Given any box, when the page renders, then the box displays the task text and none of: model, branch, token counts, elapsed time, agent type, status chip.
-
-### R3 — Subagent boxes connect to their main agent box
-
-Within an area of work, each subagent box is visually connected to the box of the agent that spawned it.
+A task is the unit of work started by one user prompt to a session. Each task renders as one main box inside its session's border. Boxes appear in the order their tasks started, oldest first.
 
 Acceptance criteria:
 
-- R3.AC1 — Given a main agent box with two subagent boxes, when the page renders, then a visible connector joins each subagent box to that main agent box.
-- R3.AC2 — Given a main agent box with no subagents, when the page renders, then the box renders alone with no orphaned connector.
+- R2.AC1 — Given a session that has been given three prompts that caused work, when the page renders, then three main boxes appear inside its border, ordered oldest first.
+- R2.AC2 — Given a new prompt to a session that already has main boxes, when the snapshot refreshes, then a new main box is appended and the existing boxes remain unchanged.
+- R2.AC3 — Given a prompt that caused no work (no agents spawned and no tool use), when the page renders, then no main box is created for it. (Source: D7)
 
-### R4 — Finished work stays visible, marked with a cross
+### R3 — Helper boxes connect to their main box
 
-A box for completed work remains on screen and carries a cross at its top-left corner.
+An agent spawned while a task is active is a helper for that task. Each helper renders as a box connected to the box of the agent that spawned it: the main box when the session spawned it directly, or its parent helper's box when an agent spawned it.
 
 Acceptance criteria:
 
-- R4.AC1 — Given an agent whose work has finished, when the page renders, then its box is still present and shows a cross at the top-left corner.
-- R4.AC2 — Given an agent still working, when the page renders, then its box shows no cross.
+- R3.AC1 — Given a task whose session spawned two helpers, when the page renders, then both helper boxes are visibly connected to that task's main box.
+- R3.AC2 — Given a helper that itself spawned a helper, when the page renders, then the deeper box connects to its own parent box, not to the main box. (Source: D2)
+- R3.AC3 — Given a task with no helpers, when the page renders, then its main box renders alone with no orphaned connector.
+
+### R4 — Boxes show only the work
+
+Every box shows only the text of the work it is doing, plus the completion cross from R5. No other field appears.
+
+Acceptance criteria:
+
+- R4.AC1 — Given any box, when the page renders, then it shows work text and none of: model, branch, token counts, elapsed time, agent type, status chip, session name.
+- R4.AC2 — Given a main box for a task the session is doing itself, when the page renders, then its text is a short inferred title for that task. (Source: D6)
+- R4.AC3 — Given a main box for a task delegated whole to one agent, when the page renders, then its text is that agent's description. (Source: D6)
+- R4.AC4 — Given a helper box, when the page renders, then its text is that agent's description.
+- R4.AC5 — Given any box, when the page renders, then it is a fixed-width rectangle whose text wraps onto several lines, neither a full-width single-line bar nor a square. (Source: D9)
+
+### R5 — Finished main boxes stay, marked with a dismissable cross
+
+A main box whose task has finished stays on screen and shows a cross at its top-left corner. Clicking the cross removes that box from view.
+
+Acceptance criteria:
+
+- R5.AC1 — Given a task whose work has finished, when the page renders, then its main box is still present and shows a cross at its top-left corner.
+- R5.AC2 — Given a task still in progress, when the page renders, then its main box shows no cross.
+- R5.AC3 — Given a task whose every agent has finished and whose session has moved on to a later task, when the page renders, then that task's main box is still present and shows a cross.
+- R5.AC4 — Given a finished main box, when the user clicks its cross, then that box is removed from the page. (Source: D3)
+- R5.AC5 — Given a box removed by its cross, when the next snapshot arrives, then it does not reappear. (Source: D3)
+
+### R6 — Finished helpers vanish, main boxes persist
+
+A helper box is removed as soon as its own agent finishes. A main box persists for as long as its session is live, whether or not its task has finished.
+
+Acceptance criteria:
+
+- R6.AC1 — Given a helper whose agent has finished, when the page renders, then that helper's box is absent. (Source: D4)
+- R6.AC2 — Given a finished task, when the page renders, then only its main box appears, with no helper boxes beneath it. (Source: D4)
+- R6.AC3 — Given a session that ends, when the page refreshes, then its border and all its boxes are removed, because the snapshot carries only live sessions. (Source: F9)
 
 ## Out of scope
 
-- Changing the server's polling, transport or storage model.
-- Dollar cost, history beyond the live snapshot, and alerting.
+- Persisting tasks across a session ending, or across a monitor restart.
+- Changing the server's polling interval, transport or storage model.
+- Token counts, latency, dollar cost and alerting on boxes.
+- Re-introducing charts removed earlier in this project.
 
 ## Constraints
 
-- Zero runtime dependencies; a single self-contained `monitor/public/index.html` and Node built-ins only. (Source: Codebase fact F1)
-- Nothing on the page is `position: sticky` or `fixed`; the body must never scroll sideways at 375px, 768px or 1280px. (Source: Source requirements, earlier decisions in this project)
-- The existing 74 tests must continue to pass. (Source: Codebase fact F7)
+- Zero runtime dependencies: Node built-ins only, and one self-contained `monitor/public/index.html`. (Source: F1)
+- Nothing on the page is `position: sticky` or `fixed`; the body never scrolls sideways at 375px, 768px or 1280px. (Source: F10)
+- The existing 74 tests must continue to pass. (Source: F7)
+- Only the agent `description`, an inferred task title and the session `goal` may be rendered as text; no prompt text, message content or file contents reach the page. (Source: F11)
 
 ## Codebase facts
 
 - F1 — The monitor is a zero-dependency Node server serving one self-contained page over SSE. (`monitor/server.js:1`)
-- F2 — Each subagent's metadata file records `agentType`, `description`, `toolUseId` and `spawnDepth`; the reader exposes `agentType` and `spawnDepth`. (`monitor/lib/subagents.js:40`, `monitor/lib/subagents.js:42`)
-- F3 — The parent of an agent is derivable: a child agent's `toolUseId` appears inside its parent's transcript. Verified by locating child `a32cd01373aa2bed4` (`toolUseId toolu_01CyWvnibcWgt9znoFcmDZm1`) inside `agent-ab10ada4292044579.jsonl`. (`~/.claude/projects/<project>/<session>/subagents/`)
-- F4 — Real sessions nest three levels deep, not two: session `f59d05dd` currently holds 19 agents at depth 1, 9 at depth 2 and 11 at depth 3.
-- F5 — The snapshot exposes a flat `agents[]` per session carrying `agentType`, `description`, `spawnDepth`, `state`, `summary`, `tokens`, `lastActivityAt`; it does not carry a parent reference. (`monitor/lib/snapshot.js:25`)
-- F6 — The session record carries an inferred `goal` plus `goalSource`, resolved from its agents' descriptions. (`monitor/lib/snapshot.js:37`)
+- F2 — Each subagent's metadata file records `agentType`, `description`, `toolUseId` and `spawnDepth`. (`monitor/lib/subagents.js:40`, `monitor/lib/subagents.js:42`)
+- F3 — An agent's parent is derivable: the child's `toolUseId` appears inside its parent's transcript. Verified by locating child `a32cd01373aa2bed4` (`toolUseId toolu_01CyWvnibcWgt9znoFcmDZm1`) inside `agent-ab10ada4292044579.jsonl`.
+- F4 — Real sessions nest three levels deep: session `f59d05dd` holds 19 agents at depth 1, 9 at depth 2 and 11 at depth 3.
+- F5 — The snapshot exposes a flat `agents[]` per session with `agentType`, `description`, `spawnDepth`, `state`, `summary`, `tokens`, `lastActivityAt`, and no parent reference. (`monitor/lib/snapshot.js:25`)
+- F6 — The session record carries an inferred `goal` and `goalSource`, produced by shelling out to the `claude` CLI and cached on disk. (`monitor/lib/snapshot.js:37`, `monitor/lib/session-goal.js`)
 - F7 — The suite runs via `node --test monitor/test/` and currently reports 74 passing.
-- F8 — A session's own current activity is exposed as `summary`, derived from its latest tool call. (`monitor/lib/snapshot.js:51`)
+- F8 — Prompt boundaries are recorded in a session transcript: lines of type `last-prompt` carry `lastPrompt`, and user lines carry a `promptId`.
+- F9 — The snapshot contains only sessions whose process is alive; dead sessions are filtered out. (`monitor/lib/live-sessions.js`)
+- F10 — The page has no `position: sticky` or `fixed` rule and holds `scrollWidth === clientWidth` at 375px, 768px and 1280px, verified in earlier work.
+- F11 — The snapshot deliberately carries no message text, prompt text or file contents; only short bounded labels.
 
 ## Decisions
 
-_None yet._
-
-## Open questions
-
-- Q1 — When is the SESSION itself the main agent box, versus each depth-1 agent being its own main agent box? Both of the source requirement's cases ("/dev" and "scan the repo") are depth-1 agents spawned by the session, and nothing in the data distinguishes them. Affects: R1, R3.
-- Q2 — Real data nests three levels deep (F4). How should depth-3 agents render? Affects: R3.
-- Q3 — Is the cross a static marker or a control the user can click? If clickable, what does it do? Affects: R4.
-- Q4 — Finished boxes accumulate; one real session already holds 39 finished agents (F4). Is there any retention limit? Affects: R4.
-- Q5 — Does the session border itself carry any label, such as the inferred goal (F6)? With R2 removing all other fields, a session would otherwise be unidentifiable. Affects: R1, R2.
-- Q6 — What task text does a box show when the SESSION is the main agent — its inferred goal (F6), or its live summary (F8)? Affects: R2.
+- D1 — Q: What groups boxes — session, agent, or task? → A: The task. A task is the work started by one user prompt; whoever actively works on it owns the main box, and agents spawned to help are connected to it. Boxes accumulate per task and never disappear. Affects: R2, R3, R5, R6.
+- D2 — Q: Real data nests three levels deep; how should a depth-3 box render? → A: Delegated to me. Nest it under its real parent, because flattening would misstate who spawned what and the parent link is derivable (F3). Affects: R3.
+- D3 — Q: Is the cross static or interactive? → A: Superseded by the user on review: the cross is clickable and removes its box. The page keeps the dismissed set in memory so a dismissed box does not return on the next snapshot. Affects: R5.
+- D4 — Q: Should finished boxes ever drop off? → A: Superseded by the user on review: a helper box vanishes as soon as its own agent finishes, so a finished task shows only its main box. Main boxes still persist for the life of the session. Affects: R6.
+- D8 — Q: How are session borders arranged? → A: User on review: stacked vertically, one per row, each spanning the page width. Affects: R1.
+- D9 — Q: What shape is a box? → A: User on review: a fixed-width rectangle whose text wraps onto several lines — not a square, and not a full-width single-line bar. Affects: R4.
+- D5 — Q: Does the border carry any label? → A: Delegated to me. Yes, the session's inferred goal, quietly, because with every other field removed a border would otherwise be unidentifiable. Affects: R1.
+- D6 — Q: What text does a main box show? → A: Delegated to me. The delegated agent's description when one agent owns the whole task; otherwise a short inferred title for the task, reusing the existing goal-inference mechanism (F6), because raw prompt text is conversational and unsuitable as a label. Affects: R4.
+- D7 — Q: Does a prompt that causes no work create a box? → A: Delegated to me. No, because a conversational reply with no tool use is not a task and would fill the page with empty boxes. Affects: R2.
