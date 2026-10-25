@@ -5,6 +5,7 @@ const NEWLINE_BYTE = 0x0a;
 const SYNTHETIC_MODEL = '<synthetic>';
 const TERMINAL_STOP_REASONS = new Set(['end_turn', 'stop_sequence', 'max_tokens', 'refusal']);
 const SPAWN_TOOL_NAME = 'Agent';
+const HANDBACK_TOOL_NAME = 'SubagentHandback';
 const MAX_PROMPT_TIMESTAMPS = 200;
 
 function emptyState() {
@@ -22,6 +23,7 @@ function emptyState() {
     spawnedToolUseIds: new Set(),
     lastActivityAt: null,
     running: false,
+    handedBack: false,
     aiTitle: null,
   };
 }
@@ -62,8 +64,11 @@ function applyAssistantLine(entry, record) {
     if (messageKey) entry.countedMessageKeys.add(messageKey);
   }
   if (typeof message.model === 'string' && message.model !== SYNTHETIC_MODEL) state.model = message.model;
-  state.running = !TERMINAL_STOP_REASONS.has(message.stop_reason);
-  for (const block of contentBlocks(message)) {
+  const blocks = contentBlocks(message);
+  // handing back the report ends the agent's run, though it closes on a tool call rather than a terminal stop
+  state.handedBack = blocks.some((block) => block && block.type === 'tool_use' && block.name === HANDBACK_TOOL_NAME);
+  state.running = !state.handedBack && !TERMINAL_STOP_REASONS.has(message.stop_reason);
+  for (const block of blocks) {
     if (!block || block.type !== 'tool_use') continue;
     state.lastToolUse = describeToolUse(block);
     if (block.name === SPAWN_TOOL_NAME && typeof block.id === 'string' && block.id) {
@@ -86,8 +91,11 @@ function recordPromptAt(promptAts, timestamp) {
 }
 
 function applyUserLine(state, record) {
-  state.running = true;
-  if (!isPromptLine(record)) return;
+  const isPrompt = isPromptLine(record);
+  // the handback's own tool result keeps the run closed; a new prompt reopens it, as when the agent is continued
+  if (isPrompt) state.handedBack = false;
+  state.running = !state.handedBack;
+  if (!isPrompt) return;
   const promptAt = parseTimestamp(record.timestamp);
   state.lastPromptAt = promptAt;
   recordPromptAt(state.promptAts, promptAt);

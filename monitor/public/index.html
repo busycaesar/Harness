@@ -486,7 +486,16 @@ function buildTask(task, sessionId) {
   return item;
 }
 
+// a dismissed task that picks up work again is shown and forgotten, so finishing again offers a fresh cross
+function forgetIfActiveAgain(task, sessionId) {
+  const taskIds = dismissedTasks.get(sessionId);
+  if (!taskIds || task.main.state === FINISHED_STATE || !taskIds.delete(task.taskId)) return;
+  if (taskIds.size === 0) dismissedTasks.delete(sessionId);
+  saveDismissedTasks();
+}
+
 function isShown(task, sessionId) {
+  forgetIfActiveAgain(task, sessionId);
   if (dismissedTasks.get(sessionId)?.has(task.taskId)) return false;
   return typeof task.title === "string" && task.title.trim() !== "";
 }

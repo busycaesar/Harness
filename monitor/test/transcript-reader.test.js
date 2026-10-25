@@ -244,3 +244,25 @@ test('a turn is open until an assistant line reaches a terminal stop reason, and
     assert.equal(reader.read(file).state.running, true);
   });
 });
+
+test('a turn that hands back its report is closed, and its tool result does not reopen it', () => {
+  withTranscript((file, reader) => {
+    writeTranscript(file, [
+      assistantLine({ id: 'm1', usage: usageOf(1, 1), blocks: [toolUseBlock('SubagentHandback', { message: 'done' })] }),
+    ]);
+    assert.equal(reader.read(file).state.running, false);
+    appendToTranscript(file, [toolResultLine('2026-01-01T00:02:00.000Z')]);
+    assert.equal(reader.read(file).state.running, false);
+  });
+});
+
+test('a handed-back turn reopens on a new prompt or on further output', () => {
+  withTranscript((file, reader) => {
+    const handback = assistantLine({ id: 'm1', usage: usageOf(1, 1), blocks: [toolUseBlock('SubagentHandback')] });
+    writeTranscript(file, [handback, toolResultLine('2026-01-01T00:02:00.000Z')]);
+    appendToTranscript(file, [promptLine('2026-01-01T00:03:00.000Z', 'one more thing')]);
+    assert.equal(reader.read(file).state.running, true);
+    appendToTranscript(file, [handback, assistantLine({ id: 'm2', usage: usageOf(1, 1), blocks: [toolUseBlock('Bash')] })]);
+    assert.equal(reader.read(file).state.running, true);
+  });
+});
