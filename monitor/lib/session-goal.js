@@ -2,7 +2,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 
-const DEFAULT_CLI_PATH = '/opt/homebrew/bin/claude';
+const CLI_NAME = 'claude';
+const FALLBACK_CLI_PATH = '/opt/homebrew/bin/claude';
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
 const DEFAULT_CACHE_FILE = path.join(__dirname, '..', '.session-goals.json');
 const DEFAULT_MINIMUM_DESCRIPTIONS = 2;
@@ -13,6 +14,25 @@ const CHILD_TIMEOUT_MS = 60000;
 const MAX_DESCRIPTIONS = 40;
 const MAX_GOAL_LENGTH = 80;
 const CLI_NOISE_PATTERN = /^Client\.\w+\(\) called but server does not advertise/;
+
+function isExecutableFile(filePath) {
+  try {
+    fs.accessSync(filePath, fs.constants.X_OK);
+    return fs.statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
+}
+
+// the CLI lives in a different place on each machine, so it is looked up on PATH like a shell would
+function resolveCliPath(searchPath = process.env.PATH || '') {
+  const found = searchPath
+    .split(path.delimiter)
+    .filter((directory) => directory !== '')
+    .map((directory) => path.join(directory, CLI_NAME))
+    .find(isExecutableFile);
+  return found || FALLBACK_CLI_PATH;
+}
 
 function readCacheFile(cacheFile) {
   let text;
@@ -114,7 +134,7 @@ function runCli({ cliPath, model, prompt, timeoutMs }) {
 
 function createGoalResolver({
   cacheFile = DEFAULT_CACHE_FILE,
-  cliPath = process.env.MONITOR_GOAL_CLI || DEFAULT_CLI_PATH,
+  cliPath = process.env.MONITOR_GOAL_CLI || resolveCliPath(),
   model = process.env.MONITOR_GOAL_MODEL || DEFAULT_MODEL,
   timeoutMs = CHILD_TIMEOUT_MS,
   nowMs = Date.now,
@@ -213,4 +233,4 @@ function createGoalResolver({
   return { resolveGoal, resolveTitle, whenQuiet };
 }
 
-module.exports = { createGoalResolver };
+module.exports = { createGoalResolver, resolveCliPath };

@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { createGoalResolver } = require('../lib/session-goal');
+const { createGoalResolver, resolveCliPath } = require('../lib/session-goal');
 const { makeTempDirectory, removeDirectory } = require('./helpers');
 
 const FAKE_CLI = path.join(__dirname, 'fake-cli');
@@ -319,5 +319,45 @@ test('the CLI path comes from MONITOR_GOAL_CLI when no path is given', () => wit
     resolver.resolveGoal('s1', agentsNamed(3));
     await resolver.whenQuiet();
     assert.equal(startsIn(callsFile).length, 1);
+  },
+));
+
+function withCliDirectories(run) {
+  const directory = makeTempDirectory();
+  const empty = path.join(directory, 'empty');
+  const bin = path.join(directory, 'bin');
+  fs.mkdirSync(empty);
+  fs.mkdirSync(bin);
+  try {
+    run({ empty, bin });
+  } finally {
+    removeDirectory(directory);
+  }
+}
+
+test('the CLI is found on PATH, in the first directory that holds an executable claude', () => withCliDirectories(
+  ({ empty, bin }) => {
+    const cli = path.join(bin, 'claude');
+    fs.writeFileSync(cli, '#!/bin/sh\n');
+    fs.chmodSync(cli, 0o755);
+    assert.equal(resolveCliPath([empty, bin].join(path.delimiter)), cli);
+  },
+));
+
+test('a claude on PATH that is not executable is skipped', () => withCliDirectories(
+  ({ empty, bin }) => {
+    fs.writeFileSync(path.join(empty, 'claude'), 'not a program');
+    fs.chmodSync(path.join(empty, 'claude'), 0o644);
+    const cli = path.join(bin, 'claude');
+    fs.writeFileSync(cli, '#!/bin/sh\n');
+    fs.chmodSync(cli, 0o755);
+    assert.equal(resolveCliPath([empty, bin].join(path.delimiter)), cli);
+  },
+));
+
+test('the CLI falls back to the Homebrew path when PATH holds no claude', () => withCliDirectories(
+  ({ empty }) => {
+    assert.equal(resolveCliPath(empty), '/opt/homebrew/bin/claude');
+    assert.equal(resolveCliPath(''), '/opt/homebrew/bin/claude');
   },
 ));
