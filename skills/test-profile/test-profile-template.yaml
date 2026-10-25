@@ -1,0 +1,34 @@
+# Test profile: how to find the tests related to a changed file, and the coverage threshold, found by scanning this project.
+# A new scan replaces every entry except those with `source: manual`, which it keeps unchanged.
+# To set an entry by hand, or to keep your edit to one, set its `source` to `manual`.
+
+# One section per app or package. A project with a single app has one section.
+sections:
+  # The app's name from its manifest, or its folder name.
+  - name: <name>
+    # The app's folder, relative to the project root; `.` for the root.
+    path: <folder>
+    # How to find the tests related to a changed file, or `none found`.
+    related_tests:
+      # `command`: the test tooling selects them; `naming`: test files map to source files by name and location.
+      kind: <command | naming>
+      # For `command` only: the command, with `{files}` standing for the changed files.
+      command: <command>
+      # For `command` only: the folder to run it from, relative to the project root.
+      cwd: <folder>
+      # For `naming` only: one entry per mapping; `{dir}`, `{name}` and `{ext}` stand for parts of the source path.
+      patterns:
+        - source: <source path pattern>
+          test: <test path pattern>
+          # How many existing test files follow it.
+          followed: <N> of <M> test files
+      # Where it came from: `<file>:<line>`, `<file> <key>`, or `manual`.
+      source: <file>:<line>
+    # The coverage the project requires, or `none found`.
+    coverage_threshold:
+      # The required value, with its unit.
+      value: <value>
+      # What it measures (lines, branches, statements, functions) and over what (the whole project, each file, given paths).
+      measures: <what>
+      # Where it came from: `<file>:<line>`, `<file> <key>`, or `manual`.
+      source: <file>:<line>
