@@ -1,4 +1,4 @@
-# Test profile: how to find the tests related to a changed file, and the coverage threshold, found by scanning this project.
+# Test setup: how to find the tests related to a changed file, and the coverage threshold, found by scanning this project.
 # A new scan replaces every entry except those with `source: manual`, which it keeps unchanged.
 # To set an entry by hand, or to keep your edit to one, set its `source` to `manual`.
 

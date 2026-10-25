@@ -1,5 +1,5 @@
 ---
-name: architecture-design
+name: draw-architecture-map
 description: "Use when given an architecture data file (a file map carrying `files`, or a master carrying `sections`) and a map path, to render it as one self-contained, offline, interactive HTML map. Renders only: not for listing files, resolving imports, assigning tiers or otherwise analysing a codebase."
 user-invocable: false
 metadata:

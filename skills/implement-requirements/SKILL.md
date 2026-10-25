@@ -1,5 +1,5 @@
 ---
-name: implement
+name: implement-requirements
 description: Implement technical requirements — a prompt, ticket body, spec or plan — by changing the project's files until every requirement is proven met, or fix a given list of findings in existing code. Builds a verification checklist from the requirements first, then implements and ticks each item off with evidence. Use when code must change to meet stated requirements or fix stated findings; with neither given, it changes nothing.
 argument-hint: <requirements text, or path to a requirements, spec, plan or findings file>
 metadata:
@@ -33,8 +33,8 @@ If it is findings, follow "Fixing findings" instead of Steps 2 to 6.
 
 ## Step 2: Build the checklist
 
-1. Invoke the `checklist` skill with the **requirements**, never the plan: pass the requirements file path, or the requirements text.
-2. If it reports requirements that need clarification, ask the user about each one, using the `AskUserQuestion` tool where the answer has a few clear options. Then invoke `checklist` again with the requirements plus a `Clarifications:` section holding the user's answers. Repeat until it writes a checklist.
+1. Invoke the `write-checklist` skill with the **requirements**, never the plan: pass the requirements file path, or the requirements text.
+2. If it reports requirements that need clarification, ask the user about each one, using the `AskUserQuestion` tool where the answer has a few clear options. Then invoke `write-checklist` again with the requirements plus a `Clarifications:` section holding the user's answers. Repeat until it writes a checklist.
 3. If it reports that a checklist already exists, use that one: this is a resumed run. Items already ticked stay ticked.
 4. Read the checklist in full before changing any code.
 

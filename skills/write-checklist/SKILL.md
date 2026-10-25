@@ -1,5 +1,5 @@
 ---
-name: checklist
+name: write-checklist
 description: Turn technical requirements (inline text or a requirements file) into a verification checklist at <work-items>/<slug>/checklist.md — one item per requirement or acceptance criterion, each with an objective pass/fail proof, built from the requirements alone. Use when requirements need a checklist that can prove they were met. Not for writing or reviewing requirements, planning the work, or checking work against an existing checklist; never changes an existing checklist.
 argument-hint: <requirements text or path to a requirements file>
 user-invocable: false

@@ -1,11 +1,11 @@
 ---
-name: deep-verify
+name: verify-claims
 description: Rigorous, multi-agent, evidence-backed verification of specific claims about code, ending in a verdict per claim (confirmed, refuted, partially true, unverifiable) with file:line and executed evidence. Use when the user wants a statement about a codebase verified, confirmed or double-checked and a wrong answer would be costly. Not for simple lookups, open-ended exploration or bug hunting with no specific claim to test, reviewing a diff, or ticking off a requirements list.
 metadata:
   model-tier: Frontier
 ---
 
-# Deep Verify
+# Verify claims
 
 Verify claims about code with the rigor of a code audit. Several independent agents investigate in parallel, each trying to *disprove* its claim, and a final skeptical pass challenges the results before anything is reported.
 

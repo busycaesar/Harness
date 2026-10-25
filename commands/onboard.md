@@ -8,7 +8,7 @@ metadata:
 
 # Project map
 
-Work out a project's architecture from its code: which files exist, which file imports which, where the program starts, and which tier each part belongs to. Hand those findings to the `architecture-design` skill, which draws them.
+Work out a project's architecture from its code: which files exist, which file imports which, where the program starts, and which tier each part belongs to. Hand those findings to the `draw-architecture-map` skill, which draws them.
 
 This command owns the analysis. It makes no decision about how the map looks.
 
@@ -116,17 +116,17 @@ Keep going only while splitting earns something: a section that would divide int
 
 ## Step 7: Draw it
 
-Read the input section of the `architecture-design` skill and write each data file in the format it defines, to a temporary location outside the project.
+Read the input section of the `draw-architecture-map` skill and write each data file in the format it defines, to a temporary location outside the project.
 
 `files` holds every listed file. `tiers` lists only the tiers that have a part on this map, in the table's order. `tiers` and `tierOf` describe this map alone, so a section's data file names its own parts and its own tiers, not the project's.
 
-**One map:** write that file and invoke the `architecture-design` skill with it and the map path.
+**One map:** write that file and invoke the `draw-architecture-map` skill with it and the map path.
 
 **Sections:** write one data file per section, holding only that section's files, its own imports, and the entry points that fall inside it. Then write the master, which lists the sections, each naming the map file drawn for it.
 
 Name the section maps beside the master: a master at `project-map.html` puts link-engine at `project-map.link-engine.html`, so the whole set moves together and the links keep working.
 
-Invoke `architecture-design` once per section and once for the master. Delete the temporary files afterwards.
+Invoke `draw-architecture-map` once per section and once for the master. Delete the temporary files afterwards.
 
 ## Step 8: Report
 

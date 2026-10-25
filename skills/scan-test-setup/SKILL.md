@@ -1,21 +1,21 @@
 ---
-name: test-profile
-description: Use when a project's test profile should be found and recorded — how to find the tests related to a changed source file, and the coverage threshold it requires (what it measures and where it is set). Scans the project's test tooling, test files, config and CI, and writes one YAML file with each finding and the file it came from, or that none was found. Reads only: it runs no tests and does not write tests, commands or docs.
+name: scan-test-setup
+description: Use when a project's test setup should be found and recorded — how to find the tests related to a changed source file, and the coverage threshold it requires (what it measures and where it is set). Scans the project's test tooling, test files, config and CI, and writes one YAML file with each finding and the file it came from, or that none was found. Reads only: it runs no tests and does not write tests, commands or docs.
 metadata:
   model-tier: Mid
 ---
 
-# Test profile
+# Test setup
 
 Scan the project and write, per app or package, how to find the tests related to a changed file and the coverage threshold, into one YAML file.
 
-Reads and records only: runs nothing except the listing in Step 2 and asks the user nothing. Changes no file except the profile file. No git state changes.
+Reads and records only: runs nothing except the listing in Step 2 and asks the user nothing. Changes no file except the test setup file. No git state changes.
 
 Follow the never-assume rule in `.claude/rules/harness/never-assume.md`, with the evidence as the only source: every entry traces to the file and line or key it came from. A gap is not asked about: it is recorded as `none found`.
 
 ## Step 1: Settings
 
-1. Read the `test-profile` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/config/test-profile.yaml`.
+1. Read the `test-setup` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/config/test-setup.yaml`.
 2. If that file exists, read it and set aside every entry with `source: manual`. If it cannot be parsed as YAML, stop without writing and report the parse error, so no manual entry is lost.
 
 ## Step 2: List the files
@@ -46,7 +46,7 @@ When two sources disagree on the threshold, record neither and report both.
 
 ## Step 6: Write the file
 
-1. Write the file from [test-profile-template.yaml](test-profile-template.yaml), keeping its header comments, even when every entry is `none found`. Comments go on the line above, never at the end of a line.
+1. Write the file from [test-setup-template.yaml](test-setup-template.yaml), keeping its header comments, even when every entry is `none found`. Comments go on the line above, never at the end of a line.
 2. Put back every `manual` entry set aside in Step 1 under the same section and key, keeping its section even if the scan found none. A manual entry replaces the discovered one.
 3. An existing file is otherwise replaced.
 4. Re-read the written file. Each discovered entry's `source` exists and shows that evidence; each manual entry set aside is present unchanged. Drop or restore any entry that fails.

@@ -1,5 +1,5 @@
 ---
-name: spec
+name: write-spec
 description: Turn requirements — a feature request, ticket body, prompt or requirements file — into a complete, unambiguous specification of what to build, or update an existing spec when its requirements change. Researches the codebase for facts, asks the user about every remaining ambiguity until none is left, and gets the user's approval of the final spec. Use when what to build is not yet settled; not for deciding how to build it, and not for making the change. Produces a spec document only; never writes code.
 argument-hint: <requirements text or path to a requirements file>
 metadata:
