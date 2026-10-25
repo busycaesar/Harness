@@ -19,14 +19,16 @@ Harness is a reusable, self-improving [Claude Code](https://claude.com/claude-co
 
 ## Skills and commands
 
-- **`/dev`**: Takes requirements all the way to implemented changes by running spec, plan and implement in order, then a clean-code check.
+- **`/dev`**: Takes requirements all the way to implemented, tested changes by running spec, plan, implement and test in order, then a clean-code check.
 - **`/spec`**: Turns requirements into a complete, unambiguous specification, asking about every gap.
 - **`/plan`**: Researches the codebase and writes a plan of file-specific tasks grouped into parallel waves.
 - **`/implement`**: Changes the project's files until every requirement is proven met against a verification checklist.
+- **`/test`**: Runs the tests related to the uncommitted changes, fixes what they broke, writes new tests in the project's style and meets its coverage threshold.
 - **`/onboard`**: Maps a project's architecture (files, imports, entry points, tiers) as an interactive HTML map.
-- **`/xray`**: Scans a project for its commands and its own conventions and clean-code practices, and writes them to the project's config and rules.
+- **`/xray`**: Scans a project for its commands, its own conventions and clean-code practices, and its test profile, and writes them to the project's config and rules.
 - **`/scan-commands`**: Finds the project's install, run, build, test and other commands and stores them in one YAML file.
 - **`/conventions`**: Finds the conventions and clean-code practices a project actually follows and writes them as rule files, keeping hand-written rules.
+- **`/test-profile`**: Finds how a project's tests map to source files and its coverage threshold, and stores them in one YAML file.
 - **`/clean-code`**: Checks code against the clean-code rules and writes a Markdown report; never edits code.
 - **`/deep-verify`**: Verifies claims about code rigorously with multiple agents and evidence-backed answers.
 - **`/runbook`**: Works out how to run a project locally and draws it as an interactive HTML runbook, with every command traced to the repository.
