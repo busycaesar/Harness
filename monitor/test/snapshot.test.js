@@ -9,9 +9,11 @@ const {
   removeDirectory,
   assistantLine,
   promptLine,
+  toolResultLine,
   toolUseBlock,
   usageOf,
   writeTranscript,
+  appendToTranscript,
   writeSessionFile,
   sessionRecord,
   sessionDirectoryFor,
@@ -211,6 +213,29 @@ test('a subagent is finished once its last turn reaches a terminal stop reason',
       ]);
     });
     assert.deepEqual(agentStatesOf(session), { 'cut-off': 'finished', reported: 'finished' });
+  });
+});
+
+test('a subagent that handed back its report is finished, and active again once it is continued', () => {
+  withClaudeDir((claudeDir) => {
+    const handback = assistantLine({
+      id: 'h1',
+      usage: usageOf(1, 1),
+      timestamp: '2026-01-01T00:05:00.000Z',
+      blocks: [toolUseBlock('SubagentHandback', { message: 'report' })],
+    });
+    const session = sessionWithAgents(claudeDir, null, (record) => {
+      writeSubagent(claudeDir, record, 'handed-back', agentMeta('reported through the handback'), [
+        handback,
+        toolResultLine('2026-01-01T00:05:01.000Z'),
+      ]);
+      writeSubagent(claudeDir, record, 'continued', agentMeta('sent a follow-up'), [
+        handback,
+        toolResultLine('2026-01-01T00:05:01.000Z'),
+        promptLine('2026-01-01T00:06:00.000Z', 'one more thing please'),
+      ]);
+    });
+    assert.deepEqual(agentStatesOf(session), { continued: 'active', 'handed-back': 'finished' });
   });
 });
 
@@ -656,7 +681,7 @@ test('a most recent task still running an agent stays active even when the sessi
   });
 });
 
-test('a prompt that spawned no agent becomes no task, so no task box is ever agentless', () => {
+test('a prompt that spawned no agent becomes no task, yet the busy session working on it has left the earlier task', () => {
   withClaudeDir((claudeDir) => {
     writeSessionPromptedAt(claudeDir, [FIRST_PROMPT_AT, SECOND_PROMPT_AT], (record) => {
       spawnAgentAt(claudeDir, record, 'only', FIRST_TASK_STARTED_AT + 1000, finishedTranscript('f1'));
@@ -664,7 +689,82 @@ test('a prompt that spawned no agent becomes no task, so no task box is ever age
 
     const tasks = tasksOf(claudeDir);
     assert.deepEqual(tasks.map((task) => task.taskId), [`task-${FIRST_TASK_STARTED_AT}`]);
-    assert.deepEqual(tasks[0].main, { kind: 'agent', agentId: 'only', state: 'active' });
+    assert.deepEqual(tasks[0].main, { kind: 'agent', agentId: 'only', state: 'finished' });
+  });
+});
+
+function sessionTranscriptPath(claudeDir, record) {
+  return path.join(sessionDirectoryFor(claudeDir, record), `${record.sessionId}.jsonl`);
+}
+
+function closedTurnAt(promptAt, id) {
+  return [
+    promptLine(promptAt),
+    assistantLine({ id, usage: usageOf(1, 1), stopReason: 'end_turn', timestamp: promptAt }),
+    turnDurationLine(promptAt),
+  ];
+}
+
+test('a session reported busy whose own turn has closed, with every agent finished, is idle along with its task', () => {
+  withClaudeDir((claudeDir) => {
+    const record = sessionRecord({ status: 'busy' });
+    writeSessionFile(claudeDir, record);
+    writeTranscript(sessionTranscriptPath(claudeDir, record), closedTurnAt(FIRST_PROMPT_AT, 'm1'));
+    spawnAgentAt(claudeDir, record, 'nested-parent', FIRST_TASK_STARTED_AT + 1000, finishedTranscript('f1'));
+
+    const [session] = buildWith(claudeDir).sessions;
+    assert.equal(session.status, 'idle');
+    assert.equal(session.summary, 'Idle');
+    assert.equal(session.currentTurnStartedAt, null);
+    assert.deepEqual(session.tasks.map((task) => task.main.state), ['finished']);
+  });
+});
+
+test('a session reported busy whose own turn has closed stays busy while one of its agents still works', () => {
+  withClaudeDir((claudeDir) => {
+    const record = sessionRecord({ status: 'busy' });
+    writeSessionFile(claudeDir, record);
+    writeTranscript(sessionTranscriptPath(claudeDir, record), closedTurnAt(FIRST_PROMPT_AT, 'm1'));
+    spawnAgentAt(claudeDir, record, 'background', FIRST_TASK_STARTED_AT + 1000, activeTranscript('a1', FIRST_PROMPT_AT));
+
+    const [session] = buildWith(claudeDir).sessions;
+    assert.equal(session.status, 'busy');
+    assert.deepEqual(session.tasks.map((task) => task.main.state), ['active']);
+  });
+});
+
+test('a session kept busy by an earlier task\'s agent, its own turn closed, is not working on its latest task', () => {
+  withClaudeDir((claudeDir) => {
+    const record = sessionRecord({ status: 'busy' });
+    writeSessionFile(claudeDir, record);
+    writeTranscript(sessionTranscriptPath(claudeDir, record), [
+      ...closedTurnAt(FIRST_PROMPT_AT, 'm1'),
+      ...closedTurnAt(SECOND_PROMPT_AT, 'm2'),
+    ]);
+    spawnAgentAt(claudeDir, record, 'background', FIRST_TASK_STARTED_AT + 1000, activeTranscript('a1', FIRST_PROMPT_AT));
+    spawnAgentAt(claudeDir, record, 'latest', SECOND_TASK_STARTED_AT + 1000, finishedTranscript('f1'));
+
+    const [session] = buildWith(claudeDir).sessions;
+    assert.equal(session.status, 'busy');
+    assert.deepEqual(session.tasks.map((task) => task.main.state), ['active', 'finished']);
+  });
+});
+
+test('the session status follows its own turn live: busy once prompted, idle once that turn closes', () => {
+  withClaudeDir((claudeDir) => {
+    const record = sessionRecord({ status: 'busy' });
+    writeSessionFile(claudeDir, record);
+    const transcriptFile = sessionTranscriptPath(claudeDir, record);
+    writeTranscript(transcriptFile, closedTurnAt(FIRST_PROMPT_AT, 'm1'));
+    spawnAgentAt(claudeDir, record, 'done', FIRST_TASK_STARTED_AT + 1000, finishedTranscript('f1'));
+    const build = createSnapshotBuilder({ claudeDir, isAlive: () => true, nowMs: () => NOW });
+    const statusOf = () => build().sessions[0].status;
+
+    assert.equal(statusOf(), 'idle');
+    appendToTranscript(transcriptFile, [promptLine(SECOND_PROMPT_AT)]);
+    assert.equal(statusOf(), 'busy');
+    appendToTranscript(transcriptFile, [assistantLine({ id: 'm2', usage: usageOf(1, 1), stopReason: 'end_turn', timestamp: SECOND_PROMPT_AT })]);
+    assert.equal(statusOf(), 'idle');
   });
 });
 

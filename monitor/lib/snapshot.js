@@ -29,9 +29,17 @@ function reportedStatus(record) {
   return BUSY_STATUS;
 }
 
-function summarizeSession(record, transcriptState) {
-  if (record.status === IDLE_STATUS) return 'Idle';
-  if (record.status === WAITING_STATUS) return 'Waiting for input';
+// the record can stay busy long after the session's own turn has closed, so a closed turn with no agent
+// still working is idle; a missing transcript gives no turn to judge, so the record stands
+function sessionStatusOf(record, transcript, agents) {
+  const status = reportedStatus(record);
+  if (status !== BUSY_STATUS || !transcript || transcript.state.running) return status;
+  return agents.some((agent) => agent.state === ACTIVE_STATE) ? BUSY_STATUS : IDLE_STATUS;
+}
+
+function summarizeSession(status, transcriptState) {
+  if (status === IDLE_STATUS) return 'Idle';
+  if (status === WAITING_STATUS) return 'Waiting for input';
   return summarizeToolUse(transcriptState.lastToolUse);
 }
 
@@ -39,8 +47,14 @@ function spawnerSetsOf(agents) {
   return new Map(agents.map((agent) => [agent.agentId, agent.spawnedToolUseIds]));
 }
 
-function isWorkedOnBySession(isMostRecentTask, sessionStatus) {
-  return isMostRecentTask && SESSION_WORKING_STATUSES.has(sessionStatus);
+// the session works only on the task its latest prompt started, and only while its own turn is open;
+// a later prompt that spawned no agent forms no task, yet it still moves the session off the earlier one
+function isWorkedOnBySession(taskStartedAt, sessionTurn) {
+  return sessionTurn.isOpen && taskStartedAt === sessionTurn.lastPromptAt;
+}
+
+function sessionTurnOf(status, transcriptState) {
+  return { isOpen: SESSION_WORKING_STATUSES.has(status) && transcriptState.running, lastPromptAt: transcriptState.lastPromptAt };
 }
 
 function taskStateOf(task) {
@@ -92,22 +106,20 @@ function describeTask(task, parentOf, resolveTitle) {
   };
 }
 
-function describeTasks(agents, promptAts, resolveTitle, sessionStatus) {
+function describeTasks(agents, promptAts, resolveTitle, sessionTurn) {
   const parentOf = buildAgentTree(agents, spawnerSetsOf(agents));
   const agentById = new Map(agents.map((agent) => [agent.agentId, agent]));
   const grouped = groupIntoTasks(agents, promptAts, parentOf);
-  const mostRecentIndex = grouped.length - 1;
-  return grouped.map((task, index) => describeTask({
+  return grouped.map((task) => describeTask({
     taskId: task.taskId,
     startedAt: task.startedAt,
     main: mainBoxOf(task, parentOf),
     agents: task.agentIds.map((agentId) => agentById.get(agentId)),
-    isWorkedOnBySession: isWorkedOnBySession(index === mostRecentIndex, sessionStatus),
+    isWorkedOnBySession: isWorkedOnBySession(task.startedAt, sessionTurn),
   }, parentOf, resolveTitle));
 }
 
-function describeSession(record, repoRoot, transcriptState, agents, goal, tasks) {
-  const status = reportedStatus(record);
+function describeSession(record, status, repoRoot, transcriptState, agents, goal, tasks) {
   const { taskTitle, taskTitleSource } = resolveTaskTitle(agents, transcriptState);
   return {
     sessionId: record.sessionId,
@@ -121,7 +133,7 @@ function describeSession(record, repoRoot, transcriptState, agents, goal, tasks)
     goal,
     goalSource: goal === null ? taskTitleSource : 'inferred',
     status,
-    waitingFor: record.status === WAITING_STATUS && typeof record.waitingFor === 'string' ? record.waitingFor : null,
+    waitingFor: status === WAITING_STATUS && typeof record.waitingFor === 'string' ? record.waitingFor : null,
     statusUpdatedAt: record.statusUpdatedAt,
     startedAt: record.startedAt,
     model: transcriptState.model,
@@ -132,7 +144,7 @@ function describeSession(record, repoRoot, transcriptState, agents, goal, tasks)
     tokens: { ...transcriptState.tokens },
     lastTurnDurationMs: transcriptState.lastTurnDurationMs,
     currentTurnStartedAt: status === IDLE_STATUS ? null : transcriptState.lastPromptAt,
-    summary: summarizeSession(record, transcriptState),
+    summary: summarizeSession(status, transcriptState),
     agents,
     tasks,
   };
@@ -178,8 +190,9 @@ function createSnapshotBuilder({
     const transcriptState = transcript ? transcript.state : emptyState();
     const agents = readSubagents(subagentsDirectory(claudeDir, record.cwd, record.sessionId), transcriptState);
     const goal = resolveGoal(record.sessionId, agents);
-    const tasks = describeTasks(agents, transcriptState.promptAts, resolveTitle, reportedStatus(record));
-    return describeSession(record, repoRootOf(record.cwd), transcriptState, agents, goal, tasks);
+    const status = sessionStatusOf(record, transcript, agents);
+    const tasks = describeTasks(agents, transcriptState.promptAts, resolveTitle, sessionTurnOf(status, transcriptState));
+    return describeSession(record, status, repoRootOf(record.cwd), transcriptState, agents, goal, tasks);
   }
 
   return function buildSnapshot() {
