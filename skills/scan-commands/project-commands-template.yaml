@@ -33,6 +33,8 @@ sections:
         all: <entry>
         file: <entry>
         name: <entry>
+        # Running the tests with coverage measured.
+        coverage: <entry>
       lint: <entry>
       format: <entry>
       typecheck: <entry>

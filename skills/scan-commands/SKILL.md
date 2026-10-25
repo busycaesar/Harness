@@ -1,6 +1,6 @@
 ---
 name: scan-commands
-description: Use when the user wants a project's own shell commands found and recorded — install, run per environment, build, test (all, one file, one test), lint, format, typecheck and others such as migrations or starting services. Scans the project's files (CI, task files, containers, manifests, docs) and writes one YAML file with each command, the folder to run it from, what it needs first and the file it came from. Reads only: it does not run, verify or fix commands, and does not write docs or agent config.
+description: Use when the user wants a project's own shell commands found and recorded — install, run per environment, build, test (all, one file, one test, with coverage), lint, format, typecheck and others such as migrations or starting services. Scans the project's files (CI, task files, containers, manifests, docs) and writes one YAML file with each command, the folder to run it from, what it needs first and the file it came from. Reads only: it does not run, verify or fix commands, and does not write docs or agent config.
 metadata:
   model-tier: Budget
 ---
@@ -46,7 +46,7 @@ For each section, record what it has of:
 - `install`: installing dependencies.
 - `run`: one entry per environment the evidence names (e.g. dev, staging, prod), keyed by that name.
 - `build`.
-- `test`: `all`; and `file` and `name`, running one file or one test by name, only where the test tooling the project uses supports it. Write the argument as `{file}` or `{name}`.
+- `test`: `all`; and `file` and `name`, running one file or one test by name, only where the test tooling the project uses supports it. Write the argument as `{file}` or `{name}`. `coverage`: running the tests with coverage measured.
 - `lint`, `format`, `typecheck`.
 - `other`: anything else found, such as migrations, seeding, code generation or starting services, each under a short name for what it does.
 
