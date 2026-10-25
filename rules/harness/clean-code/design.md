@@ -7,4 +7,6 @@ SOLID, applied to functions and modules as well as classes.
 - **Substitutable implementations.** Anything that implements an interface or extends a base works wherever the base is expected, with no special cases for the caller.
 - **Small interfaces.** Callers depend only on what they use. Prefer several focused interfaces or parameters over one large one.
 - **Depend on abstractions at boundaries.** Core logic receives its dependencies (database, network, clock, file system) from outside instead of creating them, so it can be swapped and tested.
+- **Config comes in, not from globals.** A component that talks to the outside world (an adapter, client or provider) receives its configuration when it is created and never reads global config itself.
 - **Composition over inheritance.** Build behaviour by combining small parts. Use inheritance only for a true "is a" relationship, and keep hierarchies shallow.
+- **UTC timestamps.** Timestamps are timezone-aware and in UTC. Convert to local time only for display.

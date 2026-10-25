@@ -4,6 +4,8 @@
 - **Build only what is needed now (YAGNI).** No speculative features, parameters, hooks or abstractions for cases that do not exist yet.
 - **Don't repeat knowledge (DRY).** Each rule, value or piece of logic lives in one place. When the same logic appears a third time, extract it.
 - DRY is about knowledge, not text. Code that only looks alike but changes for different reasons stays separate.
+- **No dead code.** Every module, function, export and variable is used. Delete what isn't.
+- **No commented-out code.** Leave no commented-out code or TODO/FIXME markers. Version control keeps the old code; the tracker keeps the to-dos.
 
 ## When they conflict
 
