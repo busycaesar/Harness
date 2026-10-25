@@ -139,14 +139,33 @@ test('drops sessions with dead pids and counts live sessions per project', () =>
   });
 });
 
-test('sorts waiting sessions first, then busy, then newest status change', () => {
+test('orders sessions by start time, oldest first, whatever their status', () => {
   withClaudeDir((claudeDir) => {
-    writeSessionFile(claudeDir, sessionRecord({ pid: 1, sessionId: 'idle-new', status: 'idle', statusUpdatedAt: 900 }));
-    writeSessionFile(claudeDir, sessionRecord({ pid: 2, sessionId: 'busy-old', status: 'busy', statusUpdatedAt: 100 }));
-    writeSessionFile(claudeDir, sessionRecord({ pid: 3, sessionId: 'busy-new', status: 'busy', statusUpdatedAt: 500 }));
-    writeSessionFile(claudeDir, sessionRecord({ pid: 4, sessionId: 'waiting-old', status: 'waiting', statusUpdatedAt: 50 }));
+    writeSessionFile(claudeDir, sessionRecord({ pid: 1, sessionId: 'idle-new', status: 'idle', startedAt: 900, statusUpdatedAt: 900 }));
+    writeSessionFile(claudeDir, sessionRecord({ pid: 2, sessionId: 'busy-old', status: 'busy', startedAt: 100, statusUpdatedAt: 100 }));
+    writeSessionFile(claudeDir, sessionRecord({ pid: 3, sessionId: 'busy-new', status: 'busy', startedAt: 500, statusUpdatedAt: 500 }));
+    writeSessionFile(claudeDir, sessionRecord({ pid: 4, sessionId: 'waiting-old', status: 'waiting', startedAt: 50, statusUpdatedAt: 50 }));
     const order = buildWith(claudeDir).sessions.map((session) => session.sessionId);
-    assert.deepEqual(order, ['waiting-old', 'busy-new', 'busy-old', 'idle-new']);
+    assert.deepEqual(order, ['waiting-old', 'busy-old', 'busy-new', 'idle-new']);
+  });
+});
+
+test('a session keeps its place when its status changes', () => {
+  withClaudeDir((claudeDir) => {
+    writeSessionFile(claudeDir, sessionRecord({ pid: 1, sessionId: 'older', status: 'busy', startedAt: 100, statusUpdatedAt: 800 }));
+    writeSessionFile(claudeDir, sessionRecord({ pid: 2, sessionId: 'newer', status: 'idle', startedAt: 500, statusUpdatedAt: 600 }));
+    const build = createSnapshotBuilder({ claudeDir, isAlive: () => true, nowMs: () => NOW });
+    assert.deepEqual(build().sessions.map((session) => session.sessionId), ['older', 'newer']);
+    writeSessionFile(claudeDir, sessionRecord({ pid: 1, sessionId: 'older', status: 'idle', startedAt: 100, statusUpdatedAt: 900 }));
+    assert.deepEqual(build().sessions.map((session) => session.sessionId), ['older', 'newer']);
+  });
+});
+
+test('sessions that started together are ordered by session id', () => {
+  withClaudeDir((claudeDir) => {
+    writeSessionFile(claudeDir, sessionRecord({ pid: 1, sessionId: 'b-session', status: 'busy', startedAt: 100 }));
+    writeSessionFile(claudeDir, sessionRecord({ pid: 2, sessionId: 'a-session', status: 'idle', startedAt: 100 }));
+    assert.deepEqual(buildWith(claudeDir).sessions.map((session) => session.sessionId), ['a-session', 'b-session']);
   });
 });
 

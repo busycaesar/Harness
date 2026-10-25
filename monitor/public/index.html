@@ -343,7 +343,6 @@ const PROJECT_STORAGE_KEY = "agent-monitor.project";
 const DISMISSED_STORAGE_KEY = "agent-monitor.dismissed";
 const FIXTURE_URLS = ["/fixtures/snapshot.json", "../fixtures/snapshot.json"];
 const RECONNECT_DELAY_MS = 3000;
-const STATUS_ORDER = { waiting: 0, busy: 1, idle: 2 };
 const STATUS_LABELS = { waiting: "Waiting", busy: "Busy", idle: "Idle" };
 const WAITING_STATUS = "waiting";
 const FINISHED_STATE = "finished";
@@ -531,11 +530,6 @@ function buildSessionRegion(session) {
   return region;
 }
 
-function compareSessions(first, second) {
-  if (first.status !== second.status) return STATUS_ORDER[first.status] - STATUS_ORDER[second.status];
-  return second.startedAt - first.startedAt;
-}
-
 function pickDefaultProject(projects) {
   return projects.reduce((best, project) => (project.liveSessions > best.liveSessions ? project : best));
 }
@@ -597,9 +591,8 @@ function renderSessions() {
   pruneDismissedTasks(snapshot.sessions);
   const project = selectedProject();
   syncProjectOptions(project);
-  const sessions = project
-    ? snapshot.sessions.filter((session) => session.project === project.name).sort(compareSessions)
-    : [];
+  // the snapshot already lists sessions in their stable start order, so the page keeps it
+  const sessions = project ? snapshot.sessions.filter((session) => session.project === project.name) : [];
   renderTitle(project, { waiting: countStatus(sessions, "waiting"), busy: countStatus(sessions, "busy") });
   if (sessions.length === 0) {
     renderEmpty("No live sessions for this project");

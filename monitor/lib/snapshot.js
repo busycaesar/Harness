@@ -150,11 +150,10 @@ function describeSession(record, status, repoRoot, transcriptState, agents, goal
   };
 }
 
-const STATUS_ORDER = { waiting: 0, busy: 1, idle: 2 };
-
+// sessions keep the order they started in, so a session's region never moves when its status changes
 function compareSessions(left, right) {
-  if (left.status !== right.status) return STATUS_ORDER[left.status] - STATUS_ORDER[right.status];
-  return right.statusUpdatedAt - left.statusUpdatedAt;
+  if (left.startedAt !== right.startedAt) return left.startedAt - right.startedAt;
+  return left.sessionId.localeCompare(right.sessionId);
 }
 
 function summarizeProjects(sessions, repoRootOf) {
