@@ -8,7 +8,7 @@ sections:
   - name: <name>
     # The app's folder, relative to the project root; `.` for the root.
     path: <folder>
-    # How to find the tests related to a changed file, or `none found`.
+    # How to find the tests related to a changed file; with none found, the scalar `related_tests: none found`.
     related_tests:
       # `command`: the test tooling selects them; `naming`: test files map to source files by name and location.
       kind: <command | naming>
@@ -16,7 +16,8 @@ sections:
       command: <command>
       # For `command` only: the folder to run it from, relative to the project root.
       cwd: <folder>
-      # For `naming` only: one entry per mapping; `{dir}`, `{name}` and `{ext}` stand for parts of the source path.
+      # For `naming` only: one entry per mapping. In both patterns, `{dir}` stands for zero or more whole folder names joined by `/` (none: the `/` after it is dropped too),
+      # `{name}` for the file name without its extension, and `{ext}` for the extension without its dot; any other text matches itself.
       patterns:
         - source: <source path pattern>
           test: <test path pattern>
@@ -24,7 +25,7 @@ sections:
           followed: <N> of <M> test files
       # Where it came from: `<file>:<line>`, `<file> <key>`, or `manual`.
       source: <file>:<line>
-    # The coverage the project requires, or `none found`.
+    # The coverage the project requires; with none found, the scalar `coverage_threshold: none found`.
     coverage_threshold:
       # The required value, with its unit.
       value: <value>

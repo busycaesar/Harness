@@ -1,0 +1,71 @@
+# Run steps: how this project is run for development, one route per development way, in order, found by scanning its files.
+# A new scan replaces every entry except those with `source: manual`, which it keeps unchanged.
+# To add an entry by hand, or to keep your edit to one, set its `source` to `manual`.
+
+# The project's folder name.
+project: <name>
+
+# One route per development way in the project commands file, in any section. A project with one development way has one route.
+routes:
+  # `<section>/<way>`: the section's name and the way's key under `dev` in the project commands file, e.g. `web/local`; just `<way>` when the file has a single section.
+  - name: <route>
+    # One entry per step, in the order they run.
+    steps:
+      # A short id other steps name in `needs`.
+      - id: <id>
+        title: <what the step does>
+        # Exactly as recorded in the project commands file.
+        command: <command>
+        # Folder to run it from, relative to the project root.
+        cwd: <folder>
+        # `service` keeps running; `task` runs and exits.
+        kind: <service | task>
+        # What it starts and the port each claims. Omitted for a task that starts nothing.
+        starts:
+          - name: <process or container>
+            # Omitted when it claims no port.
+            port: <port>
+            source: <file>:<line>
+        # The ids of the steps in this route that must come first. Steps with the same `needs` and no path between them run in parallel.
+        needs:
+          - <id>
+        # The condition to wait for before the next step, not a duration. Omitted when none.
+        gate: <condition>
+        # A check the reader can run to tell it came up. Omitted when the project defines none.
+        verify: <command or check>
+        # What must be set first: env vars by name (never their values), credentials, files. The project commands entry's `requires`, plus what the surrounding files add.
+        requires:
+          - name: <name>
+            # e.g. `no default`, or the env sample that lists it.
+            note: <note>
+            source: <file>:<line>
+        # `own` when it holds the terminal in the foreground (a service, or a task that prompts the user); otherwise `shared`.
+        terminal: <shared | own>
+        # Where the order, gate and check came from. A key is omitted when that part was inferred.
+        sources:
+          order: <file>:<line>
+          gate: <file>:<line>
+          verify: <file>:<line>
+        # null, or a sentence naming the part that was inferred and what it rests on.
+        unverified: null
+        # Failures the project already documents for this step.
+        fails:
+          - symptom: <what the reader sees>
+            fix: <what to do>
+            source: <file>:<line>
+        # Where the command came from: `<file>:<line>`, `<file> <key>`, or `manual`.
+        source: <file>:<line>
+
+    # How to stop what the steps started, and how to reset state.
+    teardown:
+      - command: <command>
+        # null, or what the command loses (e.g. the database volume).
+        destroys: null
+        source: <file>:<line>
+
+# What the project gives no way to do.
+unresolved:
+  - what: <the missing step or fact>
+    # The route it belongs to. Omitted when it concerns the whole project.
+    route: <route>
+    why: <what was looked for and not found>

@@ -271,6 +271,38 @@
         color: var(--muted);
       }
 
+      #routes {
+        top: 74px;
+        left: 22px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        max-width: calc(100vw - 44px);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 5px;
+        box-shadow: var(--shadow);
+      }
+      #routes button {
+        font: inherit;
+        font-size: 12.5px;
+        padding: 5px 11px;
+        cursor: pointer;
+        white-space: nowrap;
+        background: none;
+        color: var(--text);
+        border: 0;
+        border-radius: 6px;
+      }
+      #routes button:hover {
+        background: var(--sunk);
+      }
+      #routes button.on {
+        background: var(--svc);
+        color: #fff;
+      }
+
       #tools {
         top: 18px;
         right: 22px;
@@ -531,6 +563,9 @@
         #brand p {
           display: none;
         }
+        #routes {
+          top: 52px;
+        }
         #tools {
           top: auto;
           bottom: 18px;
@@ -616,6 +651,8 @@
       <p id="tagline"></p>
     </div>
 
+    <div class="float" id="routes"></div>
+
     <div class="float" id="tools">
       <button id="fit">Fit</button>
       <button id="zin">+</button>
@@ -647,8 +684,7 @@
     <script>
       (function () {
         var data = JSON.parse(document.getElementById("data").textContent);
-        var steps = (data.steps || []).slice();
-        var teardown = data.teardown || [];
+        var routes = data.routes || [];
         var gaps = data.unresolved || [];
         var esc = function (s) {
           return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
@@ -659,27 +695,30 @@
         document.getElementById("title").textContent =
           (data.project || "Project") + " — running it locally";
 
-        var byId = {};
-        steps.forEach(function (s) {
-          byId[s.id] = s;
-        });
+        // Works out one route's columns, numbering and ports; drawing happens in draw().
+        var plan = function (route) {
+          var steps = (route.steps || []).slice();
+          var teardown = route.teardown || [];
+          var byId = {};
+          steps.forEach(function (s) {
+            byId[s.id] = s;
+          });
 
-        // Teardown joins the graph as its own column: it is part of the flow, not an appendix.
-        var tdNodes = teardown.map(function (t, i) {
-          return {
-            id: "__td" + i,
-            title: t.destroys ? "Tear down and wipe" : "Tear down",
-            command: t.command,
-            kind: "stop",
-            starts: [],
-            needs: [],
-            _td: t,
-          };
-        });
+          // Teardown joins the graph as its own column: it is part of the flow, not an appendix.
+          var tdNodes = teardown.map(function (t, i) {
+            return {
+              id: "__td" + i,
+              title: t.destroys ? "Tear down and wipe" : "Tear down",
+              command: t.command,
+              kind: "stop",
+              starts: [],
+              needs: [],
+              _td: t,
+            };
+          });
 
-        var depth = {},
-          guard = 0;
-        (function () {
+          var depth = {},
+            guard = 0;
           var d = function (s) {
             if (depth[s.id] != null) return depth[s.id];
             if (guard++ > 5000) return 0;
@@ -690,42 +729,83 @@
             return (depth[s.id] = v);
           };
           steps.forEach(d);
-        })();
-        var lastCol = steps.length
-          ? Math.max.apply(
-              null,
-              steps.map(function (s) {
-                return depth[s.id];
-              }),
-            )
-          : -1;
-        tdNodes.forEach(function (n) {
-          depth[n.id] = lastCol + 1;
-          byId[n.id] = n;
-        });
-
-        var all = steps.concat(tdNodes);
-        var cols = [];
-        all.forEach(function (s) {
-          (cols[depth[s.id]] = cols[depth[s.id]] || []).push(s);
-        });
-        cols = cols.filter(Boolean);
-
-        // Ports, computed first so a clash can be marked on the node that causes it.
-        var portRows = [],
-          portSeen = {},
-          clash = {};
-        steps.forEach(function (s) {
-          (s.starts || []).forEach(function (p) {
-            if (!p.port) return;
-            if (portSeen[p.port]) clash[p.port] = true;
-            portSeen[p.port] = true;
-            portRows.push({ port: p.port, name: p.name, step: s.title });
+          var lastCol = steps.length
+            ? Math.max.apply(
+                null,
+                steps.map(function (s) {
+                  return depth[s.id];
+                }),
+              )
+            : -1;
+          tdNodes.forEach(function (n) {
+            depth[n.id] = lastCol + 1;
+            byId[n.id] = n;
           });
-        });
-        portRows.sort(function (a, b) {
-          return a.port - b.port;
-        });
+
+          var all = steps.concat(tdNodes);
+          var cols = [];
+          all.forEach(function (s) {
+            (cols[depth[s.id]] = cols[depth[s.id]] || []).push(s);
+          });
+          cols = cols.filter(Boolean);
+
+          // Ports, computed first so a clash can be marked on the node that causes it.
+          var portRows = [],
+            portSeen = {},
+            clash = {};
+          steps.forEach(function (s) {
+            (s.starts || []).forEach(function (p) {
+              if (!p.port) return;
+              if (portSeen[p.port]) clash[p.port] = true;
+              portSeen[p.port] = true;
+              portRows.push({ port: p.port, name: p.name, step: s.title });
+            });
+          });
+          portRows.sort(function (a, b) {
+            return a.port - b.port;
+          });
+
+          var n = 0;
+          cols.forEach(function (c) {
+            c.forEach(function (s) {
+              s._n = s.kind === "stop" ? "×" : ++n;
+            });
+          });
+
+          var svc = steps.filter(function (s) {
+            return s.kind !== "task";
+          }).length;
+          var tag = [
+            steps.length + " steps",
+            cols.length - tdNodes.length + " stages",
+          ];
+          if (svc) tag.push(svc + " long-running");
+          if (portRows.length) tag.push(portRows.length + " ports");
+
+          return {
+            route: route,
+            steps: steps,
+            teardown: teardown,
+            tdNodes: tdNodes,
+            byId: byId,
+            depth: depth,
+            lastCol: lastCol,
+            all: all,
+            cols: cols,
+            portRows: portRows,
+            clash: clash,
+            tag: tag,
+            gaps: gaps.filter(function (g) {
+              return !g.route || g.route === route.name;
+            }),
+          };
+        };
+
+        var plans = routes.map(plan);
+        if (!plans.length) plans = [plan({ name: "", steps: [] })];
+        var multi = plans.length > 1;
+        // The route on the canvas.
+        var view = plans[0];
 
         var NW = 268,
           GAP_X = 108,
@@ -733,96 +813,51 @@
           PAD = 46;
         var canvas = document.getElementById("canvas"),
           svg = document.getElementById("edges");
-        var n = 0;
-        cols.forEach(function (c) {
-          c.forEach(function (s) {
-            s._n = s.kind === "stop" ? "×" : ++n;
-          });
-        });
+        var W = 0,
+          H = 0;
 
-        canvas.insertAdjacentHTML(
-          "beforeend",
-          all
-            .map(function (s) {
-              var chips = (s.starts || [])
-                .filter(function (p) {
-                  return p.port;
-                })
-                .map(function (p) {
-                  return (
-                    '<span class="chip' +
-                    (clash[p.port] ? " clash" : "") +
-                    '">:' +
-                    esc(p.port) +
-                    "</span>"
-                  );
-                });
-              if (s.terminal === "own")
-                chips.push('<span class="chip flag">own terminal</span>');
-              if (s.unverified)
-                chips.push('<span class="chip flag">unverified</span>');
-              if (s._td && s._td.destroys)
-                chips.push('<span class="chip clash">destroys data</span>');
-              return (
-                '<div class="node ' +
-                (s.kind === "task"
-                  ? "task"
-                  : s.kind === "stop"
-                    ? "stop"
-                    : "svc") +
-                '" data-id="' +
-                esc(s.id) +
-                '">' +
-                '<div class="n-top"><span class="idx">' +
-                s._n +
-                "</span><h3>" +
-                esc(s.title) +
-                "</h3></div>" +
-                '<div class="n-cmd">' +
-                esc(s.command) +
-                "</div>" +
-                (chips.length
-                  ? '<div class="n-foot">' + chips.join("") + "</div>"
-                  : '<div style="height:11px"></div>') +
-                "</div>"
-              );
+        var nodeHtml = function (s) {
+          var chips = (s.starts || [])
+            .filter(function (p) {
+              return p.port;
             })
-            .join(""),
-        );
-
-        var els = {};
-        canvas.querySelectorAll(".node").forEach(function (e) {
-          els[e.dataset.id] = e;
-        });
-        var pos = {};
-        var colH = cols.map(function (c) {
+            .map(function (p) {
+              return (
+                '<span class="chip' +
+                (view.clash[p.port] ? " clash" : "") +
+                '">:' +
+                esc(p.port) +
+                "</span>"
+              );
+            });
+          if (s.terminal === "own")
+            chips.push('<span class="chip flag">own terminal</span>');
+          if (s.unverified)
+            chips.push('<span class="chip flag">unverified</span>');
+          if (s._td && s._td.destroys)
+            chips.push('<span class="chip clash">destroys data</span>');
           return (
-            c.reduce(function (a, s) {
-              return a + els[s.id].offsetHeight;
-            }, 0) +
-            GAP_Y * (c.length - 1)
+            '<div class="node ' +
+            (s.kind === "task" ? "task" : s.kind === "stop" ? "stop" : "svc") +
+            '" data-id="' +
+            esc(s.id) +
+            '">' +
+            '<div class="n-top"><span class="idx">' +
+            s._n +
+            "</span><h3>" +
+            esc(s.title) +
+            "</h3></div>" +
+            '<div class="n-cmd">' +
+            esc(s.command) +
+            "</div>" +
+            (chips.length
+              ? '<div class="n-foot">' + chips.join("") + "</div>"
+              : '<div style="height:11px"></div>') +
+            "</div>"
           );
-        });
-        var maxH = Math.max.apply(null, colH);
-        cols.forEach(function (c, ci) {
-          var x = PAD + ci * (NW + GAP_X),
-            y = PAD + (maxH - colH[ci]) / 2;
-          c.forEach(function (s) {
-            els[s.id].style.left = x + "px";
-            els[s.id].style.top = y + "px";
-            pos[s.id] = { x: x, y: y, w: NW, h: els[s.id].offsetHeight };
-            y += els[s.id].offsetHeight + GAP_Y;
-          });
-        });
-        var W = PAD * 2 + cols.length * NW + (cols.length - 1) * GAP_X,
-          H = PAD * 2 + maxH;
-        canvas.style.width = W + "px";
-        canvas.style.height = H + "px";
-        svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-        svg.setAttribute("width", W);
-        svg.setAttribute("height", H);
+        };
 
-        var link = function (from, to, cls, label) {
+        var link = function (pos, from, to, cls, label) {
           var a = pos[from],
             b = pos[to];
           if (!a || !b) return "";
@@ -886,26 +921,99 @@
           );
         };
 
-        var parts = [
-          "<defs>" +
-            '<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"/></marker>' +
-            '<marker id="arh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--svc)"/></marker></defs>',
-        ];
-        steps.forEach(function (t) {
-          (t.needs || []).forEach(function (sid) {
-            if (byId[sid]) parts.push(link(sid, t.id, "", t.gate));
+        // Puts one route on the canvas, replacing the one drawn before.
+        var draw = function (p) {
+          view = p;
+          canvas.querySelectorAll(".node").forEach(function (e) {
+            e.remove();
           });
-        });
-        // Teardown hangs off the last real column with a dashed edge: reachable, not required.
-        var tails = steps.filter(function (s) {
-          return depth[s.id] === lastCol;
-        });
-        tdNodes.forEach(function (td) {
-          tails.forEach(function (s) {
-            parts.push(link(s.id, td.id, "stop", null));
+          svg.innerHTML = "";
+          canvas.insertAdjacentHTML("beforeend", p.all.map(nodeHtml).join(""));
+
+          var els = {};
+          canvas.querySelectorAll(".node").forEach(function (e) {
+            els[e.dataset.id] = e;
           });
-        });
-        svg.insertAdjacentHTML("beforeend", parts.join(""));
+          var pos = {};
+          var colH = p.cols.map(function (c) {
+            return (
+              c.reduce(function (a, s) {
+                return a + els[s.id].offsetHeight;
+              }, 0) +
+              GAP_Y * (c.length - 1)
+            );
+          });
+          var maxH = Math.max.apply(null, [0].concat(colH));
+          p.cols.forEach(function (c, ci) {
+            var x = PAD + ci * (NW + GAP_X),
+              y = PAD + (maxH - colH[ci]) / 2;
+            c.forEach(function (s) {
+              els[s.id].style.left = x + "px";
+              els[s.id].style.top = y + "px";
+              pos[s.id] = { x: x, y: y, w: NW, h: els[s.id].offsetHeight };
+              y += els[s.id].offsetHeight + GAP_Y;
+            });
+          });
+          W = PAD * 2 + p.cols.length * NW + Math.max(0, p.cols.length - 1) * GAP_X;
+          H = PAD * 2 + maxH;
+          canvas.style.width = W + "px";
+          canvas.style.height = H + "px";
+          svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+          svg.setAttribute("width", W);
+          svg.setAttribute("height", H);
+
+          var parts = [
+            "<defs>" +
+              '<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"/></marker>' +
+              '<marker id="arh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--svc)"/></marker></defs>',
+          ];
+          p.steps.forEach(function (t) {
+            (t.needs || []).forEach(function (sid) {
+              if (p.byId[sid]) parts.push(link(pos, sid, t.id, "", t.gate));
+            });
+          });
+          // Teardown hangs off the last real column with a dashed edge: reachable, not required.
+          var tails = p.steps.filter(function (s) {
+            return p.depth[s.id] === p.lastCol;
+          });
+          p.tdNodes.forEach(function (td) {
+            tails.forEach(function (s) {
+              parts.push(link(pos, s.id, td.id, "stop", null));
+            });
+          });
+          svg.insertAdjacentHTML("beforeend", parts.join(""));
+
+          document.getElementById("tagline").textContent = p.tag.join(" · ");
+          document.getElementById("gapN").textContent = p.gaps.length;
+          document.querySelectorAll("#routes button").forEach(function (b) {
+            b.classList.toggle("on", b.dataset.route === p.route.name);
+          });
+          closeDrawer();
+          fit();
+        };
+
+        // ---------- routes ----------
+        var tabs = document.getElementById("routes");
+        if (multi) {
+          tabs.innerHTML = plans
+            .map(function (p) {
+              return (
+                '<button data-route="' +
+                esc(p.route.name) +
+                '">' +
+                esc(p.route.name) +
+                "</button>"
+              );
+            })
+            .join("");
+          tabs.addEventListener("click", function (e) {
+            var b = e.target.closest("button");
+            if (!b) return;
+            plans.forEach(function (p) {
+              if (p.route.name === b.dataset.route) draw(p);
+            });
+          });
+        } else tabs.remove();
 
         // ---------- drawer ----------
         var drawer = document.getElementById("drawer"),
@@ -937,7 +1045,7 @@
         };
 
         var showNode = function (id) {
-          var s = byId[id];
+          var s = view.byId[id];
           if (!s) return;
           tool(null);
           canvas.querySelectorAll(".node").forEach(function (e) {
@@ -951,7 +1059,7 @@
 
           var h = "<h2>" + esc(s.title) + "</h2>";
           if (s._td) {
-            h += '<p class="where">' + esc(s._td.evidence || "") + "</p>";
+            h += '<p class="where">' + esc(s._td.source || "") + "</p>";
             if (s._td.destroys)
               h +=
                 '<div class="banner bad"><b>Destroys data.</b> Loses ' +
@@ -971,7 +1079,7 @@
           h +=
             '<p class="where">' +
             esc(s.cwd || ".") +
-            (s.evidence ? "  ·  from " + esc(s.evidence) : "") +
+            (s.source ? "  ·  from " + esc(s.source) : "") +
             "</p>";
           if (s.unverified)
             h +=
@@ -1025,7 +1133,7 @@
           h +=
             '<div class="row"><span class="k">Terminal</span><span>' +
             (s.terminal === "own"
-              ? "needs its own; it stays in the foreground"
+              ? "needs its own; it holds the foreground"
               : "can share one") +
             "</span></div>";
           if (s.fails && s.fails.length)
@@ -1070,17 +1178,17 @@
           tool("bPorts");
           openDrawer(
             '<h2>Ports claimed</h2><p class="where">' +
-              portRows.length +
+              view.portRows.length +
               " in total</p>" +
-              (portRows.length
+              (view.portRows.length
                 ? "<table><thead><tr><th>Port</th><th>Service</th><th>From</th></tr></thead><tbody>" +
-                  portRows
+                  view.portRows
                     .map(function (r) {
                       return (
                         '<tr><td><span class="port">' +
                         esc(r.port) +
                         "</span>" +
-                        (clash[r.port]
+                        (view.clash[r.port]
                           ? ' <span class="chip clash">clash</span>'
                           : "") +
                         "</td><td>" +
@@ -1095,7 +1203,6 @@
                 : "<p>No step publishes a port.</p>"),
           );
         };
-        document.getElementById("gapN").textContent = gaps.length;
         document.getElementById("bGaps").onclick = function () {
           canvas.querySelectorAll(".node").forEach(function (e) {
             e.classList.remove("sel");
@@ -1103,8 +1210,8 @@
           tool("bGaps");
           openDrawer(
             '<h2>Not established</h2><p class="where">Nothing here was guessed at.</p>' +
-              (gaps.length
-                ? gaps
+              (view.gaps.length
+                ? view.gaps
                     .map(function (g) {
                       return (
                         '<div class="gapitem"><h3>' +
@@ -1187,65 +1294,68 @@
           },
           { passive: false },
         );
-        fit();
         window.addEventListener("resize", fit);
+        draw(view);
 
-        var svc = steps.filter(function (s) {
-          return s.kind !== "task";
-        }).length;
-        var tag = [
-          steps.length + " steps",
-          cols.length - tdNodes.length + " stages",
-        ];
-        if (svc) tag.push(svc + " long-running");
-        if (portRows.length) tag.push(portRows.length + " ports");
-        document.getElementById("tagline").textContent = tag.join(" · ");
-
+        // The printed runbook lists every route in turn.
+        var printRoute = function (p) {
+          var name = multi ? " · " + esc(p.route.name) : "";
+          return (
+            "<h2>Steps in order" +
+            name +
+            "</h2>" +
+            p.steps
+              .map(function (s) {
+                return (
+                  '<div class="s"><h3>' +
+                  s._n +
+                  ". " +
+                  esc(s.title) +
+                  "</h3>" +
+                  (s.gate ? "<p>Waits for: " + esc(s.gate) + "</p>" : "") +
+                  "<pre>" +
+                  esc(s.command) +
+                  "</pre>" +
+                  (s.verify
+                    ? "<p>Worked when: " + esc(s.verify) + "</p>"
+                    : "") +
+                  (s.unverified
+                    ? "<p><b>Unverified.</b> " + esc(s.unverified) + "</p>"
+                    : "") +
+                  "</div>"
+                );
+              })
+              .join("") +
+            (p.teardown.length
+              ? "<h2>Shutting down" +
+                name +
+                "</h2>" +
+                p.teardown
+                  .map(function (t) {
+                    return (
+                      '<div class="s"><pre>' +
+                      esc(t.command) +
+                      "</pre>" +
+                      (t.destroys
+                        ? "<p><b>Destroys data.</b> Loses " +
+                          esc(t.destroys) +
+                          ".</p>"
+                        : "") +
+                      "</div>"
+                    );
+                  })
+                  .join("")
+              : "")
+          );
+        };
         document.getElementById("printable").innerHTML =
           "<h1>" +
           esc(data.project || "Project") +
           " — running it locally</h1>" +
           '<p class="sub">' +
-          tag.join(" · ") +
-          "</p><h2>Steps in order</h2>" +
-          steps
-            .map(function (s) {
-              return (
-                '<div class="s"><h3>' +
-                s._n +
-                ". " +
-                esc(s.title) +
-                "</h3>" +
-                (s.gate ? "<p>Waits for: " + esc(s.gate) + "</p>" : "") +
-                "<pre>" +
-                esc(s.command) +
-                "</pre>" +
-                (s.verify ? "<p>Worked when: " + esc(s.verify) + "</p>" : "") +
-                (s.unverified
-                  ? "<p><b>Unverified.</b> " + esc(s.unverified) + "</p>"
-                  : "") +
-                "</div>"
-              );
-            })
-            .join("") +
-          (teardown.length
-            ? "<h2>Shutting down</h2>" +
-              teardown
-                .map(function (t) {
-                  return (
-                    '<div class="s"><pre>' +
-                    esc(t.command) +
-                    "</pre>" +
-                    (t.destroys
-                      ? "<p><b>Destroys data.</b> Loses " +
-                        esc(t.destroys) +
-                        ".</p>"
-                      : "") +
-                    "</div>"
-                  );
-                })
-                .join("")
-            : "") +
+          (multi ? plans.length + " routes" : view.tag.join(" · ")) +
+          "</p>" +
+          plans.map(printRoute).join("") +
           (gaps.length
             ? "<h2>Not established</h2>" +
               gaps
@@ -1253,6 +1363,7 @@
                   return (
                     '<div class="s"><h3>' +
                     esc(g.what) +
+                    (multi && g.route ? " (" + esc(g.route) + ")" : "") +
                     "</h3><p>" +
                     esc(g.why) +
                     "</p></div>"

@@ -14,19 +14,29 @@ sections:
       source: <file>
     # Only categories with evidence appear, in this order.
     commands:
-      install:
-        command: <command>
-        # Folder to run it from, relative to the project root.
-        cwd: <folder>
-        # What must be in place first: env vars by name, files, running services. Omitted when nothing.
-        needs:
-          - <env var name, file or service>
-        # Where it came from: `<file>:<line>`, `<file> <key>`, or `manual`.
-        source: <file>:<line>
-      # Every other <entry> has the same fields as `install`.
-      # One entry per environment, named as the evidence names it.
+      # One entry per development way, keyed by the name the evidence gives it; `local` runs on the host, without a container.
+      dev:
+        <way>:
+          # Installing dependencies for this way; repeated in each way that shares it.
+          install:
+            command: <command>
+            # Folder to run it from, relative to the project root.
+            cwd: <folder>
+            # What must be in place first: env vars by name (never their values), files, running services. Omitted when nothing.
+            requires:
+              - name: <env var name, file or service>
+                # Optional, e.g. `copied from .env.example`.
+                note: <note>
+                source: <file>:<line>
+            # `true` when inferred from the project's own files (manifests, lockfiles, entry points); omitted otherwise.
+            inferred: true
+            # Where it came from: `<file>:<line>`, `<file> <key>`, the files an inferred command rests on, or `manual`.
+            source: <file>:<line>
+          # Every other <entry> has the same fields as `install`.
+          run: <entry>
+      # One entry per other way of running, never one meant for development: by the variant the evidence names (e.g. `container`, `prod`), else the task-file script's name.
       run:
-        <environment>: <entry>
+        <way>: <entry>
       build: <entry>
       # `file` and `name` only where the test tooling supports them; `{file}` and `{name}` stand for the argument.
       test:
