@@ -38,7 +38,7 @@ This skill only conducts. It does none of the steps' work itself, does not edit 
 
 ## Step 4: Code and tests
 
-Run two streams in parallel and wait for both to finish:
+Run two streams in parallel (see Subagents in `.claude/rules/harness/config.md`) and wait for both to finish:
 
 - **Code.** Invoke the `implement-requirements` skill with the plan file path and the work item folder.
 - **Tests.** Invoke the `write-test-plan` skill with the spec file path, the plan file path and the work item folder. Then invoke the `update-tests` skill with the test plan path from its report and the work item folder. If `write-test-plan` stops without writing a test plan, take its report and end this stream.

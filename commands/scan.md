@@ -11,7 +11,7 @@ This command only conducts. It does none of the scanning itself, does not edit t
 
 ## Step 1: Scan
 
-1. Invoke the `scan-commands`, `scan-conventions` and `scan-test-setup` skills in parallel, all with no arguments. Wait for all three to finish.
+1. Invoke the `scan-commands`, `scan-conventions` and `scan-test-setup` skills in parallel (see Subagents in `.claude/rules/harness/config.md`), all with no arguments. Wait for all three to finish.
 2. Then invoke the `scan-run-steps` skill with no folder, telling it the project's commands were just scanned; it reads the commands `scan-commands` recorded, if any.
 
 ## Step 2: Report

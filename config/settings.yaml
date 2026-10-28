@@ -2,3 +2,9 @@
 
 # Most tasks per wave: plans schedule at most this many, implementation runs at most this many at once.
 max_parallel_tasks: 4
+
+# Model per skill tier. Model families, not versions, so each tracks the latest model; change per project.
+model-tiers:
+  Budget: haiku
+  Mid: sonnet
+  Frontier: opus
