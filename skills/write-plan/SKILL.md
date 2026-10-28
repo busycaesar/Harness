@@ -1,14 +1,14 @@
 ---
 name: write-plan
-description: Plan how to implement technical requirements that already exist — a feature, change, ticket body, prompt or requirements file. Researches the codebase in depth, settles the technical approach, and writes a plan of file-specific tasks grouped into waves, where tasks in the same wave can run in parallel. Use when the what is known and the how is needed; not for deciding what to build, and not for making the change itself. Produces a plan document only; never writes code.
-argument-hint: <requirements text or path to a requirements file>
+description: Plan how to implement technical requirements that already exist — a feature, change, ticket body, prompt or requirements file. Researches the codebase in depth, settles the technical approach, and writes a plan of file-specific tasks grouped into waves, where tasks in the same wave can run in parallel. Use when the what is known and the how is needed; not for deciding what to build, and not for making the change itself. Plans the code change only, never its tests. Produces a plan document only; never writes code.
+argument-hint: "<requirements text or path to a requirements file> [work item folder]"
 metadata:
   model-tier: Frontier
 ---
 
 # Plan: Requirements → Implementation Plan
 
-Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave), in any form, into a plan that can be carried out without making any further decisions. The plan says **how**: which files change, the shape of the code in them, in what order, and which work can run in parallel. Write no code. If no requirements are given, ask for them and stop until they are.
+Turn the requirements in `$ARGUMENTS`, apart from any work item folder (or the requirements the user just gave), in any form, into a plan that can be carried out without making any further decisions. The plan says **how**: which files change, the shape of the code in them, in what order, and which work can run in parallel. Write no code. If no requirements are given, ask for them and stop until they are.
 
 ## The one rule: never assume
 
@@ -16,17 +16,15 @@ Follow the never-assume rule in `.claude/rules/harness/never-assume.md` for ever
 
 ## Step 1: Set up the plan file
 
-1. Read the `work-items` path from the harness config (`.claude/config/paths.yaml`). If the file or key is missing, use `.claude/work-items/`.
-2. Pick the change folder:
-   - If the requirements are a file already inside `<work-items>/<slug>/`, use that folder.
-   - Otherwise choose a short kebab-case slug from the requirements' title or subject. If there is a ticket key, prefix it: `ABC-123-archive-jobs`.
-3. The plan file is `<work-items>/<slug>/plan.md`. If it already exists, ask the user whether to update it in place, keeping its task and decision IDs, or plan under a new slug they name. Do not overwrite without that answer.
-4. Read `max_parallel_tasks` from `.claude/config/settings.yaml`. If missing, use 4.
+1. Read the `work-items` path (see `.claude/rules/harness/config.md`).
+2. The folder is the work item folder given in `$ARGUMENTS`; without one, create one as `.claude/rules/harness/work-items.md` says.
+3. The plan file is `plan.md` in the folder. If it already exists, ask the user whether to update it in place, keeping its task and decision IDs, or, when no folder was given, plan in a new work item folder. Do not overwrite without that answer.
+4. Read `max_parallel_tasks` (see `.claude/rules/harness/config.md`).
 
 ## Step 2: Understand the requirements
 
 1. Read the requirements in full.
-2. List them as numbered requirements. If the source already numbers them (`R1`, `R1.AC1`, …), reuse those IDs exactly. Otherwise assign `R1`, `R2`, … in the order they appear.
+2. List them as numbered requirements, with IDs as `.claude/rules/harness/work-items.md` says.
 3. Look for gaps that **block planning**: behaviour you cannot plan without knowing, contradictions, undefined terms. Check the codebase first; ask the user only what it does not answer, all such gaps in one round.
 4. If a blocking gap stays unanswered, write no plan: report the open gaps and stop.
 
@@ -38,8 +36,7 @@ For every requirement, find out:
 - **Patterns to follow**: how similar features are already built. The plan follows existing conventions.
 - **Call sites and imports**: who uses the code that will change. This sets the order of the work and reveals knock-on changes.
 - **Where new files belong**: next to their closest existing equivalent.
-- **Tests**: where tests live and how they are written.
-- **Project commands**: build, test and lint or type-check commands. Read the `project-commands` path from `.claude/config/paths.yaml` (if the key is missing, use `.claude/config/project-commands.yaml`) and take them from that file. Derive any it lacks, or all if it does not exist, from the project's rules, build manifests or CI config.
+- **Project commands**: build and lint or type-check commands. Take them from the `project-commands` file (see `.claude/rules/harness/config.md`), or from the project's rules, build manifests or CI config where they state one. Never invent one; where none states one, write `none recorded`.
 
 Stop researching a requirement once each item above is confirmed for it. Record what matters under "Codebase context", each item with a `path:line` reference.
 
@@ -60,9 +57,9 @@ Decide how each requirement will be built. The design follows the project's rule
 
 1. **Contracts first.** Shared types, interfaces, schemas, API shapes or migrations that several pieces depend on become their own early tasks. Once they are fixed, the work that uses them can run in parallel.
 2. **One task = one agent session.** A task is small enough for one agent to finish and check on its own.
-3. **Tests live inside the task.** Each task writes or updates the tests for its own change, and "Done when" includes them passing. Add a final task for tests that span several tasks (integration or end-to-end), if the requirements need them.
+3. **No tests.** The plan covers the code change only: no task writes, changes or runs a test, and no "Done when" needs one.
 4. **Design the units.** Decide whether the logic is a class, a set of functions or a module, and whether it gets its own file or goes into an existing one, and where. List every new or changed public or shared function, class or module as a unit: name, signature and a one-sentence responsibility. Private helpers and function bodies are not planned. A unit that another task uses has an exact name and signature, since tasks in the same wave run in parallel.
-5. For each task, record everything in the template: wave, requirements covered, files with `(create)` or `(modify)`, units, dependencies, approach, and a checkable "Done when".
+5. For each task, record everything in the template: wave, requirements covered, files with `(create)` or `(modify)`, units, dependencies, approach, and a checkable "Done when" that uses only recorded commands or an inspection of the code.
 
 A task **owns** the files it lists. No other task in the same wave may touch them.
 
@@ -83,7 +80,7 @@ Fix the plan until every item holds:
 - [ ] Every file a task names was confirmed in the codebase, or is marked `(create)`.
 - [ ] No dependency cycles. No task depends on a task in the same or a later wave.
 - [ ] No two tasks in a wave share a file, and no wave exceeds `max_parallel_tasks`.
-- [ ] Every task has a checkable "Done when" that names the command or check that proves it.
+- [ ] Every task has a checkable "Done when" that names the recorded command or the inspection that proves it.
 - [ ] No line defers, stubs or shrinks a requirement ("placeholder", "for now", "v1"), and no line decides nothing ("TBD", "handle edge cases", "add validation as needed").
 - [ ] The design follows `.claude/rules/`.
 - [ ] Every unit another task uses has one exact name and signature, spelled the same in every task.
@@ -91,4 +88,4 @@ Fix the plan until every item holds:
 
 ## Step 8: Save and report
 
-Write the plan from [plan-template.md](plan-template.md) to `<work-items>/<slug>/plan.md`. Report the path, the number of tasks and waves, and any decisions the user made.
+Write the plan from [plan-template.md](plan-template.md) to the plan file. Report the path, the number of tasks and waves, and any decisions the user made.

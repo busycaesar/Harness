@@ -31,7 +31,7 @@ Acceptance criteria:
 
 ## Constraints
 
-- {Must use / must not break / limits / compatibility.} (Source: {Decision D# | Codebase fact F# | Source requirements})
+- K1 — {Must use / must not break / limits / compatibility.} (Source: {Decision D# | Codebase fact F# | Source requirements})
 
 ## Codebase facts
 

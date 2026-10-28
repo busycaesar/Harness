@@ -17,9 +17,8 @@ Requirements: {path to the requirements file, or "inline" when they were given i
 
 Project commands:
 
-- Build: `{command}`
-- Test: `{command}`
-- Lint / type check: `{command}`
+- Build: `{command}` | none recorded
+- Lint / type check: `{command}` | none recorded
 
 ## Decisions
 
@@ -56,7 +55,7 @@ flowchart LR
   - `{name}({params}) -> {result}` — {one-sentence responsibility}
 - Depends on: —
 - Approach: {what to change and how, in a few lines; name the pattern to follow}
-- Done when: {checkable condition and the command or check that proves it, including the tests this task adds passing}
+- Done when: {checkable condition and the recorded command or inspection that proves it}
 
 ### T2 — {short title}
 

@@ -1,14 +1,14 @@
 ---
 name: write-spec
 description: Turn requirements — a feature request, ticket body, prompt or requirements file — into a complete, unambiguous specification of what to build, or update an existing spec when its requirements change. Researches the codebase for facts, asks the user about every remaining ambiguity until none is left, and gets the user's approval of the final spec. Use when what to build is not yet settled; not for deciding how to build it, and not for making the change. Produces a spec document only; never writes code.
-argument-hint: <requirements text or path to a requirements file>
+argument-hint: "<requirements text or path to a requirements file> [work item folder]"
 metadata:
   model-tier: Frontier
 ---
 
 # Spec: Requirements → Unambiguous Specification
 
-Turn the requirements in `$ARGUMENTS` (or the requirements the user just gave), in any form, into a specification file that leaves nothing to guess. The spec says **what** must be built, never **how**: no tasks, no file-by-file changes, no code, no technology choices other than constraints traced below. If no requirements are given, ask for them and stop until they are.
+Turn the requirements in `$ARGUMENTS`, apart from any work item folder (or the requirements the user just gave), in any form, into a specification file that leaves nothing to guess. The spec says **what** must be built, never **how**: no tasks, no file-by-file changes, no code, no technology choices other than constraints traced below. If no requirements are given, ask for them and stop until they are.
 
 ## The one rule: never assume
 
@@ -22,11 +22,10 @@ If a statement cannot be traced to one of these, it does not go in the spec's re
 
 ## Step 1: Set up the spec file
 
-1. Read the `work-items` path from the harness config (`.claude/config/paths.yaml`). If the file or key is missing, use `.claude/work-items/`.
-2. If the requirements describe several independent features, ask the user whether to write one spec or one per feature.
-3. Choose a short kebab-case slug from the requirements' title or subject. If the user gave a ticket key, prefix it: `ABC-123-archive-jobs`. The spec file is `<work-items>/<slug>/spec.md`.
-4. If that file already exists, ask the user whether to update it or create a new one. Do not overwrite.
-5. Create the file from [spec-template.md](spec-template.md) with `Status: draft`. Paste the requirements **verbatim** into "Source requirements". That section is never edited afterwards.
+1. Read the `work-items` path (see `.claude/rules/harness/config.md`).
+2. The folder is the work item folder given in `$ARGUMENTS`. Without one, if the requirements describe several independent features, ask the user whether to write one spec or one per feature; then create a work item folder per spec as `.claude/rules/harness/work-items.md` says. The spec file is `spec.md` in the folder.
+3. If that file already exists, ask the user whether to update it or, when no folder was given, create a new one in a new work item folder. Do not overwrite.
+4. Create the file from [spec-template.md](spec-template.md) with `Status: draft`. Paste the requirements **verbatim** into "Source requirements". That section is never edited afterwards.
 
 ## Step 2: Research the codebase
 
@@ -39,7 +38,7 @@ Record each relevant finding under "Codebase facts" as `F#` with a `path:line` r
 
 ## Step 3: Draft the requirements
 
-Break the source requirements into atomic, numbered requirements (`R1`, `R2`, …). Each one describes a single behaviour and gets acceptance criteria (`R1.AC1`, …) in Given / When / Then form with an **observable** result.
+Break the source requirements into atomic, numbered requirements (`R1`, `R2`, …). Each one describes a single behaviour and gets acceptance criteria (`R1.AC1`, …) in Given / When / Then form with an **observable** result. Number the constraints `K1`, `K2`, … the same way.
 
 Write only what is traceable. Wherever you cannot complete a requirement or a criterion without guessing, leave it out and add an open question instead.
 
