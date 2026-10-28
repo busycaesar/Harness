@@ -22,7 +22,7 @@ Take from `$ARGUMENTS`, in any order:
 - **Under-tested requirements or units** (coverage-gap mode): each with the requirement ID or unit it belongs to.
 - **Findings on test files** (findings mode): each with its rule, `path:line` and description. Each is a requirement to change that test's form, never what it asserts.
 
-Never read the body of any code, existing or planned. The only code you read is the declaration of a public unit the requirements, code plan or units list name, when they do not give its signature.
+Never read the body of any code, existing or planned. The only code you read is the declaration of a public unit the requirements, code plan or units list name, when they do not give its signature. To judge whether an entry point can be loaded in tests (Step 6), and for nothing else, you may also read its module's import lines and check which packages are installed.
 
 ## Step 2: Settings
 

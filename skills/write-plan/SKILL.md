@@ -59,7 +59,7 @@ Decide how each requirement will be built. The design follows the project's rule
 2. **One task = one agent session.** A task is small enough for one agent to finish and check on its own.
 3. **No tests.** The plan covers the code change only: no task writes, changes or runs a test, and no "Done when" needs one.
 4. **Design the units.** Decide whether the logic is a class, a set of functions or a module, and whether it gets its own file or goes into an existing one, and where. List every new or changed public or shared function, class or module as a unit: name, signature and a one-sentence responsibility. Private helpers and function bodies are not planned. A unit that another task uses has an exact name and signature, since tasks in the same wave run in parallel.
-5. For each task, record everything in the template: wave, requirements covered, files with `(create)` or `(modify)`, units, dependencies, approach, and a checkable "Done when" that uses only recorded commands or an inspection of the code.
+5. For each task, record everything in the template: wave, requirements covered, files with `(create)` or `(modify)`, units, dependencies, approach, and a checkable "Done when" that uses only recorded commands or an inspection of the code, citing code by its content (a function or identifier), never by line number.
 
 A task **owns** the files it lists. No other task in the same wave may touch them.
 

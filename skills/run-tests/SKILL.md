@@ -37,6 +37,6 @@ If a method selects no test, run nothing for that section.
 
 Print only:
 
-- per section: the tests run, and how they were selected (the method, or the full suite, and why the full suite);
+- per section: the tests run, and how they were selected (the method, or the full suite, and why the full suite); with `naming`, where its patterns map several source files to one test file, that the selection may include tests unrelated to the changes for that reason;
 - the tests that passed, by name or file;
 - each failing test, with its file and its output.

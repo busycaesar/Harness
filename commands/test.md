@@ -37,5 +37,5 @@ Report:
 
 - the work item folder, with the paths of the requirements and each test plan;
 - from `update-tests`: the tests written, changed and deleted, and any case not carried out, with why;
-- from `test-changes`: the tests already failing; each test that fails because of the code, with its failure and likely cause, and that running `implement-requirements` with those tests as requirements would fix the code; and the coverage against any threshold, with the tests added for it;
+- from `test-changes`: the tests already failing; each test that fails because of the code, as its report gives it, unchanged; and the coverage against any threshold, with the tests added for it;
 - the corrections and answers the user gave.

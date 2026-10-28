@@ -2,7 +2,7 @@
 
 Requirements: {path to the requirements file, or "inline" when they were given as text}
 Public units: {path to the code plan or units list, "inline", or —}
-Mode: {full | coverage gap: the under-tested requirements or units given}
+Mode: {full | coverage gap: the under-tested requirements or units given | findings: the findings given}
 
 ## Source requirements
 

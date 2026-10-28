@@ -40,7 +40,7 @@ Take the scope from `$ARGUMENTS`:
 - Find the default branch with read-only git, e.g. the remote's `HEAD`. Never assume a branch name; if it cannot be determined, ask the user.
 - For `all` and folder paths, list the files as `.claude/rules/harness/project-files.md` says.
 - Outside a git repository, only paths and `all` work. For any other scope, say so and stop.
-- Check only code files. Skip deleted files and anything that is not the project's own code (see `.claude/rules/harness/project-files.md`). If it is unclear whether a file is generated or vendored, ask the user.
+- Check only code files, test files included. Skip deleted files and anything that is not the project's own code (see `.claude/rules/harness/project-files.md`). If it is unclear whether a file is generated or vendored, ask the user.
 - For the change scopes (empty, `staged`, `branch`), check only the changed lines. Read the surrounding code for context, but do not flag code the changes did not touch. An untracked file counts as entirely changed.
 
 If there is nothing to check, say so and stop.
