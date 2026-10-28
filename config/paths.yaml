@@ -1,11 +1,14 @@
 # Harness paths: where harness skills read and write their files.
 # Paths are relative to the project root. Change a value to relocate that artifact for this project.
 
-# One folder per work item (feature, fix, ticket, request): <work-items>/<slug>/ holds its documents.
+# One folder per work item (feature, fix, ticket, request): <work-items>/<number>/ holds its documents.
 work-items: .claude/work-items/
 
 # The interactive project map: one self-contained HTML file.
 onboard: project-map.html
+
+# The local-run runbook: one self-contained HTML file.
+runbook: runbook.html
 
 # The clean-code report: one Markdown file, replaced on each run.
 clean-code: clean-code-report.md
@@ -16,8 +19,12 @@ clean-code-rules: .claude/rules/harness/clean-code/
 # The project's own shell commands (install, run, build, test and more): one YAML file, refreshed on each scan.
 project-commands: .claude/config/project-commands.yaml
 
+# How the project is run locally (steps in order, what each starts, ports, readiness checks, env vars, teardown): one YAML file, refreshed on each scan.
+run-steps: .claude/config/run-steps.yaml
+
 # The project's test setup (how to find the tests related to a changed file, and the coverage threshold): one YAML file, refreshed on each scan.
 test-setup: .claude/config/test-setup.yaml
 
 # The project's own rules (conventions and clean-code practices found in its code): one Markdown file per topic, always loaded.
+# Keep it under `.claude/rules/`, or Claude Code stops loading it.
 project-rules: .claude/rules/project/
