@@ -10,7 +10,7 @@ metadata:
 
 Check code against the clean-code rules and write a report of what breaks them.
 
-Report only: changes no file except the report. No git state changes.
+Report only: changes no file except the report.
 
 ## Never assume
 
@@ -18,10 +18,10 @@ Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Every f
 
 ## Step 1: Settings
 
-1. Read the `clean-code` path from `.claude/config/paths.yaml`. If the file or key is missing, use `clean-code-report.md` at the project root. An existing report at that path is replaced.
-2. Read `max_parallel_tasks` from `.claude/config/settings.yaml`. If missing, use 4.
-3. Read the `clean-code-rules` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/rules/harness/clean-code/`. This is the rules folder; read every file in it.
-4. Read the `project-rules` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/rules/project/`. If it exists, read every rule file under it, including its `conventions/` and `clean-code/` folders. Where a project rule conflicts with a rules-folder principle, the project rule wins: check against the project rule, not the other.
+1. Read the `clean-code` path (see `.claude/rules/harness/config.md`). An existing report at that path is replaced.
+2. Read `max_parallel_tasks` (see `.claude/rules/harness/config.md`).
+3. Read the `clean-code-rules` path (see `.claude/rules/harness/config.md`). This is the rules folder; read every file in it.
+4. Read the `project-rules` path (see `.claude/rules/harness/config.md`). If it exists, read every rule file under it, including its `conventions/` and `clean-code/` folders. Where a project rule conflicts with a rules-folder principle, the project rule wins: check against the project rule, not the other.
 5. If neither holds a rule file, say so and stop.
 
 ## Step 2: Find the code to check
@@ -38,9 +38,9 @@ Take the scope from `$ARGUMENTS`:
 
 - A given path that does not exist: say which and stop.
 - Find the default branch with read-only git, e.g. the remote's `HEAD`. Never assume a branch name; if it cannot be determined, ask the user.
-- For `all` and folder paths, list files with `git ls-files --cached --others --exclude-standard`. Outside a git repository, list every file, skipping `.git` and everything `.gitignore` excludes.
+- For `all` and folder paths, list the files as `.claude/rules/harness/project-files.md` says.
 - Outside a git repository, only paths and `all` work. For any other scope, say so and stop.
-- Check only code files. Skip deleted files, lockfiles, generated or vendored files, and binaries. If it is unclear whether a file is generated or vendored, ask the user.
+- Check only code files. Skip deleted files and anything that is not the project's own code (see `.claude/rules/harness/project-files.md`). If it is unclear whether a file is generated or vendored, ask the user.
 - For the change scopes (empty, `staged`, `branch`), check only the changed lines. Read the surrounding code for context, but do not flag code the changes did not touch. An untracked file counts as entirely changed.
 
 If there is nothing to check, say so and stop.
@@ -56,7 +56,7 @@ Read each file and judge it against every rule. For each finding, record:
 
 If two principles pull opposite ways on the same code, record one finding naming both (counted under each rule file), and give both fixes without choosing.
 
-For `all` on a large codebase, split the files by top-level folder across subagents, at most `max_parallel_tasks` at once. Each returns its findings. Subagents only read.
+For `all` on a large codebase, split the files across read-only subagents (see `.claude/rules/harness/config.md`). Each returns its findings.
 
 Before writing, re-check every finding, the subagents' included, and drop any that fails:
 
