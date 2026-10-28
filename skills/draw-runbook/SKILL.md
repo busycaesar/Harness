@@ -32,6 +32,8 @@ Read the `runbook` and `run-steps` paths (see `.claude/rules/harness/config.md`)
    If it fails, report its error and stop.
 3. Delete the temporary file.
 
+The page follows `.claude/rules/harness/visual-design.md`. Specific to it: one view tab per route; each step is a card whose kind is `service` (`--cat-1`), `task` (`--cat-2`) or teardown (`--bad`, dashed, in a last column); gates label the arrows in `--warn`; the header adds `Ports` and `Unresolved` views; print lists every route's steps in order.
+
 ## Step 4: Report
 
 - The runbook's path, and that it opens in any browser.

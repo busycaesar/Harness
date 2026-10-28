@@ -33,6 +33,8 @@ for r in routes:
     steps = r.get("steps")
     if not isinstance(steps, list):
         sys.exit("build.sh: route '%s' has no 'steps' list" % name)
+    if "teardown" in r and not isinstance(r["teardown"], list):
+        sys.exit("build.sh: route '%s' has a 'teardown' that is not a list (an empty teardown is [])" % name)
     ids = {s.get("id") for s in steps}
     for s in steps:
         for key in ("id", "title", "command"):

@@ -88,36 +88,16 @@ Each map path written, in the order given; every warning, under the map it belon
 ## Arrows
 
 - An arrow runs **from the imported file to the file that imports it**, so it points the way the dependency flows.
-- Collapsing a folder aggregates its arrows into one thicker meta-edge between boxes, with width scaled by how many imports it stands for. This is what keeps a large map responsive.
-- Hovering a file lights what it **uses** in one colour and what **uses it** in another, and fades everything else.
+- Collapsing a folder aggregates its arrows into one thicker meta-edge between boxes. This is what keeps a large map responsive.
 
-## Colour
+## Look and interaction
 
-UI colours are CSS custom properties on `:root`, with a dark-mode block under `prefers-color-scheme: dark`. Never hardcode one in the graph styles; read the token.
+The map follows `.claude/rules/harness/visual-design.md`. Specific to this map:
 
-| Token | Role |
-|---|---|
-| `--bg`, `--panel` | Page and panel backgrounds |
-| `--text`, `--muted` | Body text, secondary text and tier labels |
-| `--border`, `--edge` | Panel borders, and the resting arrow colour |
-| `--out` | What the hovered file imports |
-| `--in` | What imports the hovered file |
-| `--match` | Search hits |
-
-Each top-level box takes the next colour of the template's fixed palette (root files take `--muted`); every box inside it shares that colour, drawn at low background opacity with a stronger border, so nesting stays legible many levels deep.
-
-## Size
-
-Sizes are graph-pixel constants at the top of the template; change them there, never inline. An entry point draws 4px larger with a 3px ring and a bold label.
-
-## Interaction
-
-- **Left drag anywhere pans**, with a `grab` cursor that becomes `grabbing` while panning. A click without a drag still opens the file or folder under the pointer.
-- **Right drag** selects an area over empty space, or moves a box or the current selection.
-- **The scroll wheel zooms around the cursor**, between 0.05x and 4x.
-- Clicking resolves to the **innermost node under the cursor**: a file before its folder, a subfolder before its parent.
+- Each top-level box is a group and takes the next palette colour; root files take `--muted`.
+- **Right drag** selects an area over empty space, or moves a box or the current selection. Clicking resolves to the **innermost node under the cursor**: a file before its folder, a subfolder before its parent. Clicking a folder collapses or expands it.
 - Header controls: search, `Fit`, `Collapse all`, `Expand all`, `Reset layout`. The side panel lists what the selected file imports and what imports it.
-- Dragged positions persist per map in the browser, keyed on the data and the default layout, so a regenerated map never inherits stale positions.
+- Dragged positions are the layout memory.
 
 ## The master map
 
@@ -137,5 +117,4 @@ A section map is an ordinary map and needs nothing special. It holds only its ow
 
 - Presentation only. Never read the codebase to add or correct a fact; draw the data as given.
 - Draw exactly what the data says. Never infer an arrow, a tier, or a grouping the data did not provide.
-- The output stays one self-contained file: no CDN, no external stylesheet, no fetch.
 - Keep it readable at both ends of the range, a handful of files and tens of thousands.

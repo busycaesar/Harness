@@ -6,27 +6,27 @@
 <title>Project map</title>
 <style>
   :root {
-    --bg: #f7f7f5;
-    --panel: #ffffff;
-    --text: #1d1d1b;
-    --muted: #6b6b66;
-    --border: #dddcd6;
-    --edge: #8f8e88;
-    --out: #2563eb;
-    --in: #d97706;
-    --match: #dc2626;
+    --bg: #faf9f7; --grid: #e6e5df; --surface: #ffffff; --sunk: #f2f2ee;
+    --text: #17171a; --muted: #63635d; --faint: #95958d; --line: #e2e1db; --edge: #a8a79f;
+    --out: #2563eb; --in: #d97706; --match: #dc2626;
+    --ok: #2d7a4b; --warn: #94620d; --warn-soft: #fbf2e1; --bad: #ad2f2c; --bad-soft: #fdeceb;
+    --cat-1: #4e79a7; --cat-2: #f28e2b; --cat-3: #59a14f; --cat-4: #e15759;
+    --cat-5: #76b7b2; --cat-6: #edc948; --cat-7: #b07aa1; --cat-8: #ff9da7;
+    --cat-9: #9c755f; --cat-10: #8cd17d; --cat-11: #499894; --cat-12: #d37295;
+    --cat-13: #86bcb6; --cat-14: #f1ce63; --cat-15: #a0cbe8; --cat-16: #ffbe7d;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.16);
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   }
-  @media (prefers-color-scheme: dark) {
+  @media screen and (prefers-color-scheme: dark) {
     :root {
-      --bg: #161615;
-      --panel: #1f1f1d;
-      --text: #ecebe6;
-      --muted: #9a9993;
-      --border: #34332f;
-      --edge: #77766f;
-      --out: #60a5fa;
-      --in: #fbbf24;
-      --match: #f87171;
+      --bg: #121215; --grid: #232329; --surface: #1c1c21; --sunk: #26262c;
+      --text: #ecebe6; --muted: #a4a49c; --faint: #76766e; --line: #33333c; --edge: #6a6a74;
+      --out: #60a5fa; --in: #fbbf24; --match: #f87171;
+      --ok: #84c79a; --warn: #e0b263; --warn-soft: #322714; --bad: #f0908c; --bad-soft: #371f20;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.6);
     }
   }
   * { box-sizing: border-box; }
@@ -34,10 +34,10 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    font: 14px/1.45 var(--sans);
     display: grid;
     grid-template-rows: auto 1fr;
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: minmax(0, 1fr) 320px;
   }
   header {
     grid-column: 1 / -1;
@@ -46,49 +46,59 @@
     align-items: center;
     gap: 8px 12px;
     padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
   }
-  header h1 { font-size: 16px; margin: 0 8px 0 0; }
+  header h1 { font-size: 16px; font-weight: 650; margin: 0 8px 0 0; }
   #stats { color: var(--muted); margin-right: auto; }
   input, button {
     font: inherit;
+    font-size: 13px;
     color: var(--text);
-    background: var(--bg);
-    border: 1px solid var(--border);
+    background: var(--surface);
+    border: 1px solid var(--line);
     border-radius: 6px;
     padding: 5px 10px;
   }
   input { width: 220px; }
   button { cursor: pointer; }
-  button:hover { border-color: var(--muted); }
-  #graph { min-width: 0; min-height: 0; cursor: grab; }
+  button:hover { background: var(--sunk); }
+  button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  #graph {
+    min-width: 0;
+    min-height: 0;
+    cursor: grab;
+    background: radial-gradient(circle at 1px 1px, var(--grid) 1.4px, transparent 0) 0 0 / 26px 26px;
+  }
   #graph canvas { cursor: inherit !important; }
   #graph.panning { cursor: grabbing; }
   #graph.over-link { cursor: pointer; }
   #selection { position: fixed; display: none; border: 1px solid var(--out); background: color-mix(in srgb, var(--out) 12%, transparent); pointer-events: none; z-index: 10; }
   aside {
-    border-left: 1px solid var(--border);
-    background: var(--panel);
+    border-left: 1px solid var(--line);
+    background: var(--surface);
     padding: 16px;
     overflow: auto;
   }
-  aside h2 { font-size: 15px; margin: 0 0 4px; word-break: break-all; }
-  aside h3 { font-size: 13px; margin: 16px 0 6px; color: var(--muted); font-weight: 600; }
+  aside h2 { font-size: 15px; font-weight: 650; margin: 0 0 4px; font-family: var(--mono); word-break: break-all; }
+  aside h3 { font-size: 11px; margin: 16px 0 6px; color: var(--faint); font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; }
   aside ul { list-style: none; margin: 0; padding: 0; }
   aside li { padding: 2px 0; word-break: break-all; }
-  aside a { color: inherit; cursor: pointer; text-decoration: underline dotted; }
+  aside a { color: inherit; cursor: pointer; font-family: var(--mono); font-size: 12px; text-decoration: underline dotted; }
   aside a:hover { text-decoration: underline; }
-  .uses { color: var(--out); }
-  .usedby { color: var(--in); }
+  aside h3.uses { color: var(--out); }
+  aside h3.usedby { color: var(--in); }
   .hint { color: var(--muted); }
-  .legend { margin-top: 16px; }
   .legend li { display: flex; align-items: center; gap: 8px; }
   .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
   @media (max-width: 760px) {
-    body { grid-template-columns: 1fr; grid-template-rows: auto 1fr 40%; }
-    aside { border-left: 0; border-top: 1px solid var(--border); }
+    body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr 40%; }
+    aside { border-left: 0; border-top: 1px solid var(--line); }
     input { width: 100%; }
+  }
+  @media print {
+    header, aside { display: none; }
+    body { grid-template-columns: 1fr; grid-template-rows: 1fr; }
   }
 </style>
 </head>
@@ -117,7 +127,10 @@
   var data = JSON.parse(document.getElementById('data').textContent);
   var css = getComputedStyle(document.documentElement);
   var color = function (name) { return css.getPropertyValue(name).trim(); };
-  var palette = ['#4e79a7', '#f28e2b', '#59a14f', '#e15759', '#76b7b2', '#edc948', '#b07aa1', '#ff9da7', '#9c755f', '#8cd17d', '#499894', '#d37295', '#86bcb6', '#f1ce63', '#a0cbe8', '#ffbe7d'];
+  // The categorical palette, --cat-1 to --cat-16, in order.
+  var palette = [];
+  for (var k = 1; k <= 16; k++) palette.push(color('--cat-' + k));
+  var SANS = color('--sans');
 
   // Sizes of the layout, in graph pixels.
   var DOT = 14;
@@ -129,7 +142,7 @@
   var COLUMN_GAP = 200;
   var BOX_GAP = 50;
   var HEADER_H = 60;
-  var FONT = '12px system-ui, -apple-system, "Segoe UI", sans-serif';
+  var FONT = '12px ' + SANS;
 
   var files = (data.files || []).slice().sort();
   var fileSet = new Set(files);
@@ -347,14 +360,14 @@
     boxSelectionEnabled: false,
     autoungrabify: true,
     style: [
-      { selector: 'node', style: { 'label': 'data(label)', 'color': color('--text'), 'font-size': 12, 'font-family': 'system-ui, -apple-system, "Segoe UI", sans-serif', 'min-zoomed-font-size': 5 } },
+      { selector: 'node', style: { 'label': 'data(label)', 'color': color('--text'), 'font-size': 12, 'font-family': SANS, 'min-zoomed-font-size': 5 } },
       { selector: 'node[kind = "file"]', style: { 'shape': 'ellipse', 'width': DOT, 'height': DOT, 'background-color': 'data(color)', 'border-width': 0, 'text-valign': 'bottom', 'text-halign': 'center', 'text-margin-y': 4, 'font-size': 11 } },
       { selector: 'node.entry', style: { 'width': DOT + 4, 'height': DOT + 4, 'border-width': 3, 'border-color': color('--text'), 'font-weight': 'bold' } },
       { selector: 'node[kind = "folder"]', style: { 'shape': 'round-rectangle', 'background-color': 'data(color)', 'background-opacity': 0.06, 'border-color': 'data(color)', 'border-width': 1.5, 'border-opacity': 0.7, 'padding': PAD, 'text-valign': 'top', 'text-halign': 'center', 'font-size': 13, 'font-weight': 'bold', 'text-margin-y': -5, 'color': 'data(color)' } },
       { selector: 'node.collapsed', style: { 'padding': 0, 'width': 'data(w)', 'height': COLLAPSED_H, 'background-opacity': 0.4, 'border-width': 2, 'text-valign': 'center', 'text-margin-y': 0, 'color': color('--text') } },
       { selector: 'node.section', style: { 'padding': 0, 'width': 'data(w)', 'height': 'data(h)', 'background-opacity': 0.14, 'border-width': 2, 'text-valign': 'center', 'text-margin-y': 0, 'color': color('--text'), 'font-size': 14, 'text-wrap': 'wrap', 'text-max-width': 'data(tw)' } },
       { selector: 'node[kind = "tier"]', style: { 'shape': 'rectangle', 'background-opacity': 0, 'border-width': 0, 'width': 1, 'height': 1, 'font-size': 20, 'font-weight': 'bold', 'color': color('--muted'), 'text-valign': 'center', 'events': 'no' } },
-      { selector: 'edge', style: { 'width': 1, 'opacity': 0.35, 'line-color': color('--edge'), 'target-arrow-color': color('--edge'), 'target-arrow-shape': 'triangle', 'arrow-scale': 0.8, 'curve-style': 'bezier' } },
+      { selector: 'edge', style: { 'width': 1, 'opacity': 0.5, 'line-color': color('--edge'), 'target-arrow-color': color('--edge'), 'target-arrow-shape': 'triangle', 'arrow-scale': 0.8, 'curve-style': 'bezier' } },
       { selector: 'edge.meta', style: { 'width': 'data(width)', 'opacity': 0.5 } },
       { selector: 'edge.uses', style: { 'line-color': color('--out'), 'target-arrow-color': color('--out'), 'width': 2.5, 'opacity': 1, 'z-index': 10 } },
       { selector: 'edge.usedby', style: { 'line-color': color('--in'), 'target-arrow-color': color('--in'), 'width': 2.5, 'opacity': 1, 'z-index': 10 } },
@@ -615,9 +628,11 @@
     return '<li><span class="swatch" style="background:' + unitColor[un.path] + '"></span>' + escapeHtml(unitLabel(un.path)) + '</li>';
   }).join('');
   var showHelp = function () {
-    panel.innerHTML = '<p class="hint">Hover or click a file to see what it imports (blue) and what imports it (orange).</p>' +
+    panel.innerHTML = '<p class="hint">Hover or click a file to see what it imports and what imports it.</p>' +
       '<p class="hint">Ringed dots are entry points, where the program starts. Arrows point from a file to the files that import it. Drag to pan, scroll to zoom. Right-drag across empty space to select several boxes; right-drag a file, folder or selection to move it. Click a folder to collapse or expand it.</p>' +
-      '<h3>Folders</h3><ul class="legend">' + legend + '</ul>';
+      '<h3>Legend</h3><ul class="legend">' +
+      '<li><span class="swatch" style="background:var(--out)"></span>Imports</li>' +
+      '<li><span class="swatch" style="background:var(--in)"></span>Imported by</li>' + legend + '</ul>';
   };
 
   var selected = null;
@@ -680,6 +695,9 @@
   });
   cy.on('tap', function (ev) {
     if (ev.target === cy) clearFocus();
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape') clearFocus();
   });
   // Left button: drag anywhere to pan, with a hand cursor; a click still opens a file or folder.
   // Right button: drag across empty space to select an area; drag a box or the selection to move it.
