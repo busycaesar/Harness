@@ -1,0 +1,5 @@
+# Project files
+
+- **Listing.** In a git repository, list the project's files with `git ls-files --cached --others --exclude-standard`, then drop any that no longer exist on disk. Otherwise, list every file, skipping `.git` and everything `.gitignore` excludes. Paths are relative to the project root and use `/`.
+- **Not the project's own code.** Generated files (a generated or "do not edit" header, `linguist-generated` in `.gitattributes`), vendored or copied third-party code (`linguist-vendored`, a vendor folder), minified code, build output, lockfiles and binaries. The `.claude/` folder: the installed harness (its skills, commands, rules and config) and the project's agent settings. The harness's own outputs, even when committed: the `onboard` map and the section maps beside it, the `runbook` and `clean-code` files, and everything under the `work-items` path (see `.claude/rules/harness/config.md`).
+- **Uncommitted code changes.** The staged, unstaged and untracked files, found with read-only git, kept to code files: docs, config and anything not the project's own code are dropped. Each skill says whether test files and deleted files count.
