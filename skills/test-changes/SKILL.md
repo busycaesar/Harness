@@ -1,66 +1,65 @@
 ---
 name: test-changes
-description: Test the uncommitted code changes end to end. Runs the related tests, sorts every failure and gets the code fixed where the change broke a test, removes tests for behaviour the requirements removed, writes new tests in the project's own style until they pass, and meets the project's coverage threshold where one is recorded. Use when changes, made by hand or otherwise, need tests. Does nothing when the project records no test command.
-argument-hint: "[requirements text or file] [starting diff file]"
+description: Test the uncommitted code changes end to end. Runs the related tests, sorts every failure, gets the code fixed until every test the change broke passes again (or, with no-fix, only reports them), and meets the project's coverage threshold where one is recorded, by planning and writing the tests the under-covered requirements lack. Use when changes, made by hand or otherwise, must pass their tests. Writes no test from the code. Does nothing when the project records no test command.
+argument-hint: "[starting diff file] [work item folder] [requirements or spec] [code plan or public units] [no-fix]"
 metadata:
   model-tier: Frontier
 ---
 
 # Test the changes
 
-Leave the uncommitted code changes with tests in the project's own style, no test broken by them, and the coverage threshold met where the project records one.
+Leave the uncommitted code changes with every test they broke passing again, or reported when the code is not to be fixed, and the coverage threshold met where the project records one.
 
-This skill conducts `run-tests`, `triage-test-failures`, `implement-requirements`, `update-tests` and `check-coverage`. It changes no file itself, except to undo fix rounds that did not work (Step 4). Each skill's own rules apply while it runs, including its questions to the user. No git state changes: git is used read-only.
+This skill conducts `run-tests`, `triage-test-failures`, `implement-requirements`, `check-coverage`, `write-test-plan` and `update-tests`. It changes no file itself, except to undo fix rounds that did not work (Step 3). Each skill's own rules apply while it runs, including its questions to the user.
 
-Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Ask the user only where a step says to, with `AskUserQuestion`.
+Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Ask only where a step says to, with `AskUserQuestion`.
 
 ## Step 1: Input
 
-Take from `$ARGUMENTS`, in any order, and pass on to the skills that take them:
+Take from `$ARGUMENTS`, in any order:
 
-- **Requirements**: text, or a file holding them (requirements, spec or ticket).
-- **A starting diff**: a file holding a git diff of the changes that were already uncommitted before the work began.
+- **A starting diff**: a file holding the starting diff (see `.claude/rules/harness/temp-and-git.md`), passed to `triage-test-failures`.
+- **A work item folder**: passed to every skill that takes one. Without one, use the folder the first of them creates, from then on.
+- **Requirements or a spec**, and **a code plan or a list of public units**: used only to map coverage gaps to requirements (Step 4), never to write or judge a test.
+- **`no-fix`**: never change the code; the tests changed by this change are reported instead (Step 3).
 
-Read the `project-commands` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/config/project-commands.yaml`. If the file is missing or holds no test command, stop: do nothing and print nothing.
+Read the `project-commands` file (see `.claude/rules/harness/config.md`). If it is missing or holds no test command, stop: do nothing and print nothing.
 
 ## Step 2: Run
 
-Invoke `run-tests`. If it reports no uncommitted code change, report that and stop. With failures, do Step 4 for them, then go on.
+Invoke `run-tests`. If it reports no uncommitted code change, report that and stop. With failures, do Step 3 for them, then go on.
 
-## Step 3: Write tests
+## Step 3: Handle failures
 
-1. Invoke `update-tests` with the requirements.
-2. Invoke `run-tests`. Every new test must pass; with failures, do Step 4 for them.
+Used by Steps 2 and 4, for the failing tests they hand over.
 
-## Step 4: Handle failures
+1. **Sort.** Invoke `triage-test-failures` with the failing tests and the starting diff.
+2. **Already failing.** Leave them alone.
+3. **Changed by this change, with `no-fix`: report.** Change nothing; for each, record the test, its failure output and its likely cause in the changed code, and skip 4 and 5.
+4. **Changed by this change, otherwise: fix.** Each must pass. Before the first round, copy every uncommitted file into a new temporary folder (see `.claude/rules/harness/temp-and-git.md`). Then, at most 3 rounds:
+   - invoke `implement-requirements` with the tests as requirements: each "test `<name>` at `path:line` passes; change the code, never the test", with its output, plus the work item folder;
+   - invoke `run-tests`. Tests still failing go to the next round; new failures go through 1 and 2 first.
+5. **Undo.** If 3 rounds did not fix them, undo the rounds: restore each file they changed from the copy, or, for a file not in it, from `HEAD` with read-only `git show`; delete each file they created. Then report each test, each round and why it failed. Remove the copy when done.
 
-Used by Steps 2, 3 and 5, for the failing tests they hand over.
+## Step 4: Coverage
 
-1. **Sort.** Invoke `triage-test-failures` with the failing tests, the requirements and the starting diff.
-2. **Expected.** Invoke `update-tests` with those tests to delete, each with its requirement or the user's answer.
-3. **Already failing.** Leave them alone.
-4. **Broken by the change.** For each, read the test and the requirements. If they contradict, so both cannot hold, ask the user which holds. If the requirements hold, the test is expected: delete it as in 2, with the answer quoted. If the test holds, it goes to 5 with the answer.
-5. **Fix.** Before the first round, copy every uncommitted file into a new temporary folder outside the project (the session's scratchpad when there is one, else the system temp folder). Then, at most 3 rounds:
-   - invoke `implement-requirements` with the broken tests as findings: each with the rule "test broken by the change: change the code, never the test, so the requirements still hold and the test passes", the test's `path:line` and its output, plus the work item folder when the requirements are in one;
-   - invoke `run-tests`. Tests still failing go to the next round; new failures go through 1 to 4 first.
-6. **Undo.** If 3 rounds did not fix them, undo the rounds: restore each file they changed from the copy, or, for a file not in it, from `HEAD` with read-only `git show`; delete each file they created. Then report each test, each round and why it failed. Remove the copy when done.
-
-## Step 5: Coverage
-
-1. Invoke `check-coverage`. If it reports nothing, or met, or that coverage could not be measured, go to Step 6.
-2. Otherwise, at most 3 rounds: invoke `update-tests` with the uncovered lines it reports and the requirements, then `run-tests` (failures go to Step 4), then `check-coverage` again.
+1. Invoke `check-coverage`. If it reports nothing, or met, or that coverage could not be measured, go to Step 5.
+2. Otherwise, at most 3 rounds:
+   - **Map.** Map each uncovered range to the requirement or unit it belongs to, from the code plan's task files and units, or the public units list, and the requirements. Where they do not settle it, or none were given, ask the user, listing the ranges; their answers are requirements too.
+   - Invoke `write-test-plan` with the requirements, the code plan or public units when given, the work item folder and the mapped requirements and units as under-tested.
+   - Invoke `update-tests` with the test plan it wrote and the work item folder.
+   - Invoke `run-tests`; failures go to Step 3.
+   - Invoke `check-coverage` again; met ends the rounds.
 3. If it is still not met, tell the user what is left uncovered and why it could not be reached.
 
-## Step 6: Report
+## Step 5: Report
 
 Before reporting, confirm every temporary copy is removed and git state is unchanged.
 
 Print only:
 
 - the tests run, and how they were selected;
-- each test deleted, with the requirement or answer quoted;
 - each test already failing;
-- each test the change broke: fixed, with the files changed, or not fixed, with each round and why it failed;
-- the new test files and the tests in each;
-- per section with a threshold: the coverage measured against it, or what is left uncovered and why, or that it could not be measured;
-- the user's answers.
+- each test changed by this change: fixed, with the files changed, or not fixed, with each round and why it failed; with `no-fix`, its failure and likely cause, and that running `implement-requirements` with these tests as requirements would fix the code;
+- per section with a threshold: the coverage measured against it, the test plans and tests added for it, or what is left uncovered and why, or that it could not be measured;
+- the answers the user gave.
