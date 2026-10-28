@@ -69,7 +69,7 @@ function assertTitleRequest(cacheKey, descriptions, minimumDescriptions) {
 }
 
 function usableDescriptionsOf(descriptions) {
-  return descriptions.filter((description) => description !== '').slice(-MAX_DESCRIPTIONS);
+  return descriptions.filter((description) => description !== '');
 }
 
 // entries written by an older monitor, or hand-edited ones, are treated as absent so a stale shape regenerates instead of throwing
@@ -80,8 +80,9 @@ function usableEntry(entry) {
   return entry;
 }
 
+// only the prompt is capped: counting past the cap is what lets a long session's goal keep regenerating
 function promptFor(descriptions) {
-  const list = descriptions.map((description, index) => `${index + 1}. ${description}`).join('\n');
+  const list = descriptions.slice(-MAX_DESCRIPTIONS).map((description, index) => `${index + 1}. ${description}`).join('\n');
   return [
     'A coding session has delegated these tasks to subagents, oldest first:',
     '',

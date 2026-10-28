@@ -113,6 +113,21 @@ test('regenerates only once both 8 new agents and 10 minutes have passed', () =>
   },
 ));
 
+test('keeps regenerating once a session has more agents than the prompt cap', () => withHarness(
+  async ({ resolverWith, callsFile, advanceMs, cacheFile }) => {
+    const resolver = resolverWith();
+    resolver.resolveGoal('s1', agentsNamed(45));
+    await resolver.whenQuiet();
+    assert.equal(JSON.parse(fs.readFileSync(cacheFile, 'utf8')).s1.agentCount, 45);
+
+    advanceMs(11 * MINUTE_MS);
+    resolver.resolveGoal('s1', agentsNamed(53));
+    await resolver.whenQuiet();
+    assert.equal(startsIn(callsFile).length, 2, 'eight new agents past the cap and enough time');
+    assert.ok(startsIn(callsFile)[1].includes('40. task 53'));
+  },
+));
+
 test('keeps the cached goal verbatim while it is not due for regeneration', () => withHarness(
   async ({ resolverWith, advanceMs }) => {
     const resolver = resolverWith();
