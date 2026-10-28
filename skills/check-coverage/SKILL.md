@@ -9,16 +9,16 @@ metadata:
 
 Measure coverage where the project records a threshold, and report whether it is met and what is left uncovered.
 
-Changes no file. No git state changes: git is used read-only.
+Changes no file.
 
 ## Step 1: Settings
 
-1. Read the `test-setup` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/config/test-setup.yaml`. Take each section's `path` and `coverage_threshold`: its value, what it measures and over what. A missing file, section or entry, or `none found`, means no threshold. With no threshold in any section, stop: do nothing and print nothing.
-2. Read the `project-commands` path from `.claude/config/paths.yaml`. If the file or key is missing, use `.claude/config/project-commands.yaml`. Take each section's `test` `coverage` entry and its `cwd`.
+1. Read the `test-setup` file (see `.claude/rules/harness/config.md`). Take each section's `path` and `coverage_threshold`: its value, what it measures and over what. A missing file, section or entry, or `none found`, means no threshold. With no threshold in any section, stop: do nothing and print nothing.
+2. Read the `project-commands` file (see `.claude/rules/harness/config.md`). Take each section's `test` `coverage` entry and its `cwd`.
 
 ## Step 2: Find the change
 
-List every uncommitted change with read-only git (staged, unstaged and untracked) and keep only code files, not test files. Each belongs to the section whose `path` holds it most deeply. Outside a git repository, say so and stop.
+List the uncommitted code changes (see `.claude/rules/harness/project-files.md`), not test files. Each belongs to its section (see `.claude/rules/harness/project-sections.md`). Outside a git repository, say so and stop.
 
 ## Step 3: Measure
 
