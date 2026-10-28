@@ -37,7 +37,7 @@ If it is a plan, find its source requirements. If a plan does not say where its 
 ## Step 2: Build the checklist
 
 1. The folder is the work item folder the input names; without one, create one as `.claude/rules/harness/work-items.md` says.
-2. Invoke the `write-checklist` skill with the **requirements**, never the plan, and the folder: pass the requirements file path, or the requirements text.
+2. Invoke the `write-checklist` skill with the **requirements**, never the plan, and the folder: pass the requirements file path, or the requirements text, plus any unit names the requirements or the user's message already give.
 3. If it reports requirements that need clarification, ask the user about each one. Then invoke `write-checklist` again with the requirements plus a `Clarifications:` section holding the user's answers. Repeat until it writes a checklist.
 4. Read the checklist it wrote in full before changing any code.
 
@@ -76,7 +76,7 @@ Implement the requirements in whatever order the code calls for: shared pieces f
 
 Go through the checklist item by item:
 
-1. Carry out the item's proof: run the named command or inspect the code.
+1. Carry out the item's proof: run the named command or inspect the code. If the proof describes a unit by what it does, resolve it to the unit you wrote and record that unit's name in the evidence.
 2. If it passes, record the evidence and tick it.
 3. If it fails, fix the implementation and run the proof again, never weakening it (see `.claude/rules/harness/proofs.md`).
 4. If the same item still fails after three fix attempts, stop fixing it: treat it as an item that cannot be met (see "Checklist rules") and move on.

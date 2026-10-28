@@ -17,7 +17,7 @@ Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Every i
 ## Step 1: Find the requirements
 
 1. Take the requirements from `$ARGUMENTS`, apart from any work item folder. If they are a file path, read it; if it cannot be read, stop and report the path. Otherwise treat them as the requirements text.
-2. If the file is a derived document, such as a plan or task list, that points to its source requirements, build the checklist from that source, never from its tasks. If it names no source, or the source cannot be read, stop and report that.
+2. If the file is a derived document that points to its source requirements, build the checklist from that source, never from its tasks. If it names no source, or the source cannot be read, stop and report that.
 3. If the input holds no requirements, stop and report that nothing was given.
 
 ## Step 2: Set up the checklist file
@@ -31,12 +31,13 @@ Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Every i
 2. Create at least one item per acceptance criterion and per constraint (`K1`, …). If a requirement has no criteria, create items from its stated behaviour. Split any statement that holds more than one condition into one item per condition.
 3. Give each item a proof: an objective way to confirm it, with what counts as a pass. A proof never runs a test, existing or new. Prefer, in this order:
    - **build**: the project's build or type check command and the expected exit status or output.
-   - **command**: a project command (a script, never a test command), or, when no test covers the requirement, a one-off command such as `python3 -c "from config import load; print(load().timeout)"`, with the expected output or exit status. A one-off command changes no file and needs no network or long-running service.
+   - **command**: a project command (a script, never a test command), or, only when the `project-commands` file (see `.claude/rules/harness/config.md`) records no test command, a one-off command such as `python3 -c "from config import load; print(load().timeout)"`, with the expected output or exit status. A one-off command changes no file and needs no network or long-running service.
    - **inspection**: reading the code for a specific, checkable fact, such as a unit having the name and signature the requirements give. Use only when nothing above can prove it.
-4. Every proof is automated. A requirement only a person can confirm (a manual step, a visual check) gets no item: list it under "Not provable automatically" with why, and invent no proof for it.
-5. A proof never needs production data, real credentials or a destructive action on a live system. Never copy secrets from the requirements into the checklist.
-6. Cover what the requirements state about errors, empty states, limits and edge cases as their own items. Do not add edge cases the requirements do not mention.
-7. A requirement needs clarification when no objective proof can be written for it as stated: for example, it rests on an unquantified term ("fast", "secure", "user-friendly", "works correctly") or contradicts another requirement. Do not invent a threshold or pick a side.
+4. A proof names a unit (function, file, module) only when the input gives that name. Otherwise it describes the unit by what it does, still objectively, such as "the function that formats a duration returns `1h 2m 3s` for 3723".
+5. Every proof is automated. A requirement only a person can confirm (a manual step, a visual check) gets no item: list it under "Not provable automatically" with why, and invent no proof for it.
+6. A proof never needs production data, real credentials or a destructive action on a live system. Never copy secrets from the requirements into the checklist.
+7. Cover what the requirements state about errors, empty states, limits and edge cases as their own items. Do not add edge cases the requirements do not mention.
+8. A requirement needs clarification when no objective proof can be written for it as stated: for example, it rests on an unquantified term ("fast", "secure", "user-friendly", "works correctly") or contradicts another requirement. Do not invent a threshold or pick a side.
 
 ## Step 4: Self-check
 
@@ -46,6 +47,7 @@ Fix the checklist until every item holds:
 - [ ] Every item traces to a requirement, criterion or constraint ID.
 - [ ] Every item states one condition, and no two items check the same condition.
 - [ ] Every proof is objective: two people following it would reach the same pass/fail.
+- [ ] Every unit name in a proof comes from the input.
 - [ ] No proof runs a test or needs a person.
 - [ ] No item describes how to build anything; items state only what must be true.
 - [ ] No item checks anything beyond the requirements, such as the build, lint or the rest of the test suite.
