@@ -25,9 +25,8 @@ If nothing is staged, say so and stop — there is nothing to commit.
 
 ## Step 2: Write the commit message
 
-- Format: `<type>(<scope>): <description>`, imperative mood, lowercase, no trailing period.
+- Follow the format of the recent commits from `git log` in Step 1. Only when they show no clear format, use `<type>(<scope>): <description>`, imperative mood, lowercase, no trailing period.
 - Single-line title only — no body, unless the user has asked for more detail in this conversation.
-- Match the style of recent commits from `git log` in Step 1.
 - Staged files are treated as one commit — do not split them into multiple commits or suggest re-staging.
 
 ## Step 3: Output

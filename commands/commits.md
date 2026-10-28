@@ -33,9 +33,8 @@ If there are no unstaged or untracked changes, say so and stop.
 
 ## Step 3: Write commit messages
 
-- Format: `<type>(<scope>): <description>`, imperative mood, lowercase, no trailing period.
+- Follow the format of the recent commits from `git log` in Step 1. Only when they show no clear format, use `<type>(<scope>): <description>`, imperative mood, lowercase, no trailing period.
 - Single-line title only — no body, unless the user has asked for more detail in this conversation.
-- Match the style of recent commits from `git log` in Step 1.
 
 ## Step 4: Output
 
