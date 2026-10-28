@@ -4,7 +4,7 @@
 
 # One section per app or package. A project with a single app has one section.
 sections:
-  # The app's name from its manifest, or its folder name.
+  # The app's name, as `.claude/rules/harness/project-sections.md` gives it.
   - name: <name>
     # The app's folder, relative to the project root; `.` for the root.
     path: <folder>

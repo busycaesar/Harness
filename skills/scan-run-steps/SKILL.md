@@ -53,7 +53,7 @@ The order is the product. For every step of each route, establish:
 
 Step ids are unique within a route. Two steps are parallel only when neither needs the other, directly or through a third.
 
-Each route has its own teardown, which keeps stopping and resetting apart: for each command, `destroys` says what it loses, or is null.
+Each route has its own teardown, which keeps stopping and resetting apart: for each command, `destroys` says what it loses, or is null. A route with no teardown found has `teardown: []` and an `unresolved` entry.
 
 ## Step 5: Write the file
 

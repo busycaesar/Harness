@@ -56,7 +56,7 @@ routes:
         # Where the command came from: `<file>:<line>`, `<file> <key>`, or `manual`.
         source: <file>:<line>
 
-    # How to stop what the steps started, and how to reset state.
+    # How to stop what the steps started, and how to reset state. `[]` when none is found, with an `unresolved` entry for the route.
     teardown:
       - command: <command>
         # null, or what the command loses (e.g. the database volume).
