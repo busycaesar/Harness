@@ -25,7 +25,7 @@ Verify claims about code with the rigor of a code audit. Several independent age
 Before spawning anything:
 
 - If the request names nothing specific to verify, stop and ask the user what claim to test.
-- Restate what the user wants verified in precise terms. If a claim is ambiguous in a way that changes the answer (e.g. "thread-safe" under what usage? "handles errors" which errors?), pick the most reasonable interpretation, state it explicitly, and flag it in the final report. Only stop to ask the user if the ambiguity makes the whole task meaningless.
+- Restate what the user wants verified in precise terms. If a claim is ambiguous in a way that changes the answer (e.g. "thread-safe" under what usage? "handles errors" which errors?), follow the never-assume rule in `.claude/rules/harness/never-assume.md`: ask the user which interpretation they mean. If the user explicitly delegated the choice, pick the recommended interpretation and state it, and why, in the final report.
 - Split compound statements into **atomic, falsifiable claims**. "The cache is invalidated correctly on update and delete" is two claims. "Auth is enforced on all admin routes" is one claim that needs an enumeration of routes first.
 - For each claim, write down:
   - **Claim:** one sentence, testable as true/false.
@@ -37,7 +37,7 @@ Show this list to the user briefly (a compact table is fine), then proceed. Do n
 
 ### Step 2: Spawn parallel investigators
 
-Read `max_parallel_tasks` from `.claude/config/settings.yaml`. If missing, use 4.
+Read `max_parallel_tasks` (see `.claude/rules/harness/config.md`).
 
 Launch **one subagent per claim** (or per tightly coupled cluster of claims), at most `max_parallel_tasks` at once, with each in an isolated context so they cannot anchor on each other's conclusions. If a claim is broad (e.g. "all routes"), add a prior enumeration step or split by module so coverage is checkable.
 
@@ -151,6 +151,5 @@ Fix any failure before reporting.
 ## Behavior rules
 
 - Do not edit the user's source code during verification unless explicitly asked.
-- No git state changes: no staging, committing, stashing, branching, resetting or checking out. Read-only git commands are fine.
 - Do not run destructive commands, touch production resources, or use real credentials. If verification would require that, report UNVERIFIABLE and explain, or ask.
 - If the user's premise is wrong, say so plainly and show the evidence.

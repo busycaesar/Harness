@@ -12,26 +12,23 @@ Work out a project's architecture from its code: which files exist, which file i
 
 This command owns the analysis. It makes no decision about how the map looks.
 
-Writes nothing in the project except the map file or files at the configured path. Its data files go to a temporary location outside the project and are deleted once the map is drawn. No git state changes.
+Writes nothing in the project except the map file or files at the configured path. Its data files are temporary files (see `.claude/rules/harness/temp-and-git.md`), deleted once the map is drawn.
 
 ## The one rule: never assume
 
-Every arrow comes from an import found in the code. If an import could point to more than one file and the codebase does not settle which, leave it off and list it in the report.
+Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Every arrow comes from an import found in the code; every entry point and tier assignment traces to evidence in the code. If an import could point to more than one file and the codebase does not settle which, leave it off and list it in the report.
 
-Every entry point and tier assignment traces to evidence in the code.
+Exception: this command decides every tier assignment and section itself and does not ask: onboarding is for a user who wants to understand the project, so it does not stop to ask.
 
 ## Step 1: Settings
 
-1. Read the `onboard` path from `.claude/config/paths.yaml`. If the file or key is missing, use `project-map.html` at the project root. An existing map at that path is replaced.
-2. Read `max_parallel_tasks` from `.claude/config/settings.yaml`. If missing, use 4.
+1. Read the `onboard` path (see `.claude/rules/harness/config.md`). An existing map at that path is replaced.
+2. Read `max_parallel_tasks` (see `.claude/rules/harness/config.md`).
 3. If `$ARGUMENTS` names a folder, map only that folder. Otherwise map the whole project.
 
 ## Step 2: List the files
 
-- In a git repository, list them with `git ls-files --cached --others --exclude-standard`, then drop any that no longer exist on disk.
-- Otherwise, list every file, skipping `.git` and everything `.gitignore` excludes.
-
-Paths are relative to the project root and use `/`.
+List the project's files (see `.claude/rules/harness/project-files.md`).
 
 ## Step 3: Find the imports
 
@@ -44,7 +41,7 @@ Resolve each one to a project file, the way the project itself resolves it: rela
 
 Where a language binds by name rather than by path, resolve it the way that language does, and only when it lands on exactly one file. A C# `using` names a namespace spanning many files, so it settles nothing on its own; the type a file references does, when that type is declared in exactly one file of a namespace the file imports. A name declared in several candidate files is ambiguous: leave it off and report it.
 
-For a large project, split the files by top-level folder across subagents, at most `max_parallel_tasks` at once. Each returns its import pairs and any ambiguous imports. Subagents only read.
+For a large project, split the files across read-only subagents (see `.claude/rules/harness/config.md`). Each returns its import pairs and any ambiguous imports.
 
 ## Step 4: Find the entry points
 
@@ -69,7 +66,7 @@ Keep those you use in this order:
 | `Data` | Only when the project uses a database or data store (SQL, NoSQL, cache, search index): its schemas, migrations, models and access code. Code that reads and writes plain files (JSON, YAML, CSV on disk) is `Backend`. |
 | `DevOps` | CI/CD workflows, build and deploy scripts, containers, and the project's root setup files. |
 
-Assign every part a tier from evidence: the framework or language of its files, what it imports and what imports it. A folder name alone is not evidence; it only counts when the code agrees. A part that fits more than one tier goes where most of its files belong. Decide every part yourself; do not ask.
+Assign every part a tier from evidence: the framework or language of its files, what it imports and what imports it. A folder name alone is not evidence; it only counts when the code agrees. A part that fits more than one tier goes where most of its files belong. Decide every part yourself; do not ask (see the exception above).
 
 ## Step 6: Decide whether one map can hold it
 
@@ -116,7 +113,7 @@ Keep going only while splitting earns something: a section that would divide int
 
 ## Step 7: Draw it
 
-Read the input section of the `draw-architecture-map` skill and write each data file in the format it defines, to a temporary location outside the project.
+Read the input section of the `draw-architecture-map` skill and write each data file in the format it defines, to a temporary file.
 
 `files` holds every listed file. `tiers` lists only the tiers that have a part on this map, in the table's order. `tiers` and `tierOf` describe this map alone, so a section's data file names its own parts and its own tiers, not the project's.
 
