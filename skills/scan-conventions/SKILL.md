@@ -78,10 +78,10 @@ Re-check every rule: each example exists at that path and line and shows the rul
 
 ## Step 6: Resolve conflicts
 
-For each rule flagged as conflicting with a harness rule, re-open the cited statement; if it does not say the pattern is intended, treat the rule as "not stated".
+For each rule flagged as conflicting with a harness rule, re-open the cited statement; unless it states explicitly that the whole pattern is the way to do it (a doc, linter config or code comment), treat the rule as "not stated". A folder description, or a comment on one site, is not such a statement.
 
 - **Stated as intended.** Keep the rule, citing that statement. Ask nothing.
-- **Not stated.** Ask the user (see `.claude/rules/harness/never-assume.md`) with `AskUserQuestion`: one question per conflict, all asked together, in as few calls as its question limit allows. Each shows the rule, its examples and the harness rule it conflicts with, and offers: record it as a project rule (it overrides the harness rule in this project), or skip it (the harness rule applies). Keep the rules the user records. Drop the ones skipped, and add each to its file's `## Skipped` list.
+- **Not stated.** Ask the user (see `.claude/rules/harness/never-assume.md`) with `AskUserQuestion`: one question per conflict, all asked together, in as few calls as its question limit allows. Each shows the rule, its examples and the harness rule it conflicts with, and offers: record it as a project rule (it overrides the harness rule in this project), or skip it (the harness rule applies). It recommends recording it only when the project follows the pattern in nearly all places it applies and it is not a one-off, else skipping, and says which it recommends. Keep the rules the user records. Drop the ones skipped, and add each to its file's `## Skipped` list.
 
 A conflicting rule already listed under `## Skipped` in its file is dropped without asking.
 
@@ -100,7 +100,7 @@ These are this project's own rules, found in its code; where they conflict with 
 - **Mixed: <N> use <X>, <M> use <Y>.** <X>: `<path>:<line>`. <Y>: `<path>:<line>`.
 - **<Rule>.** Followed in <N> of <M> <unit>: `<path>:<line>`. Overrides `<harness rule file>`: <stated in `<path>:<line>` | chosen by the user>.
 
-## <app path>
+## <section name>
 
 - **<Rule>.** ...
 
@@ -113,7 +113,7 @@ These are this project's own rules, found in its code; where they conflict with 
 <set-aside content>
 ```
 
-- Rules that hold across apps go once at the top. A `## <app path>` section per app holds only what differs for that app. A single-app project has no app sections.
+- Rules that hold across apps go once at the top. A `## <section name>` section per app, headed by its section's name (never `.`), holds only what differs for that app. A single-app project has no app sections.
 - End every file with `## Manual` and the content set aside in Step 1, unchanged; empty for a new file.
 - `## Skipped` holds the lines set aside in Step 1 plus those added in Step 6, each once; a file with none has no `## Skipped` section.
 - A file with no rules, no `## Skipped` lines and no `## Manual` content is not written, and an existing one is deleted. A file with `## Skipped` or `## Manual` content is never deleted.

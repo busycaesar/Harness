@@ -11,7 +11,7 @@ Scan the project and write the commands it uses into one YAML file, one section 
 
 Reads and records only: runs none of the commands it finds and asks the user nothing. Changes no file except the commands file, and runs no git command except the listing in Step 2.
 
-Follow the never-assume rule in `.claude/rules/harness/never-assume.md`, with the evidence as the only source: every command, way of running, folder and package manager traces to the file and line or key it came from, or, for an inferred command, to the files it rests on. A gap is recorded as not found: the category is left out of the file and listed as missing in the report.
+Follow the never-assume rule in `.claude/rules/harness/never-assume.md`, with the evidence as the only source: every command, way of running, folder and package manager traces to the file and line or key it came from, or, for an inferred command, to the files it rests on. A gap is recorded as not found: the category, optional in the template, is left out of the file and listed as missing in the report.
 
 ## Step 1: Settings
 
@@ -37,7 +37,7 @@ Read the sources for each section. Sources disagree when they give different com
 
 **Containers** (dev-container configs, compose files and Dockerfiles) are read apart from this list. One gives a development way under `dev` only when the evidence says it is for development: a dev-container config, a compose file or script named or documented for development, or docs saying so; the existence of a container file alone never does. Otherwise it gives the `container` way under `run`. The services it starts go under `other`. A container never gives the install or run of a development way that does not use it.
 
-Manifests and lockfiles also settle the package manager and the language toolchain: a lockfile or a package-manager field names the tool; write every command with that tool.
+Manifests and lockfiles also settle the package manager and the language toolchain: a lockfile or a package-manager field names the tool, else a doc that names it or an install command that uses it, cited in `source`; write every command with that tool. With none of these, omit `package_manager`.
 
 When two sources of the same rank disagree (e.g. two CI jobs), record neither and report both. A command that invokes a task-file script or target which does not exist is dropped and reported as stale.
 
