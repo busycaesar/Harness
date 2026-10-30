@@ -526,23 +526,29 @@ test('tasks reproduce the worked example: a delegated agent owns one task, sessi
       {
         taskId: `task-${FIRST_TASK_STARTED_AT}`,
         startedAt: FIRST_TASK_STARTED_AT,
+        lastActivityAt: Date.parse('2026-01-01T00:00:30.000Z'),
+        tokens: { input: 3, output: 3, cacheRead: 0, cacheCreation: 0 },
+        tokenSeries: [],
         title: 'work of dev',
         titleSource: 'agent',
         main: { kind: 'agent', agentId: 'dev', state: 'active' },
         agents: [
-          { agentId: 'implementer', parentAgentId: null, description: 'work of implementer', state: 'active', depth: 1 },
-          { agentId: 'tester', parentAgentId: null, description: 'work of tester', state: 'active', depth: 1 },
+          { agentId: 'implementer', parentAgentId: null, description: 'work of implementer', state: 'active', depth: 1, spawnedAt: FIRST_TASK_STARTED_AT + 2000, tokens: { input: 1, output: 1, cacheRead: 0, cacheCreation: 0 }, tokenSeries: [] },
+          { agentId: 'tester', parentAgentId: null, description: 'work of tester', state: 'active', depth: 1, spawnedAt: FIRST_TASK_STARTED_AT + 3000, tokens: { input: 1, output: 1, cacheRead: 0, cacheCreation: 0 }, tokenSeries: [] },
         ],
       },
       {
         taskId: `task-${SECOND_TASK_STARTED_AT}`,
         startedAt: SECOND_TASK_STARTED_AT,
+        lastActivityAt: Date.parse('2026-01-01T00:10:30.000Z'),
+        tokens: { input: 2, output: 2, cacheRead: 0, cacheCreation: 0 },
+        tokenSeries: [],
         title: 'work of clean-code-scan',
         titleSource: 'first-agent',
         main: { kind: 'session', agentId: null, state: 'active' },
         agents: [
-          { agentId: 'clean-code-scan', parentAgentId: null, description: 'work of clean-code-scan', state: 'active', depth: 1 },
-          { agentId: 'rule-scan', parentAgentId: null, description: 'work of rule-scan', state: 'active', depth: 1 },
+          { agentId: 'clean-code-scan', parentAgentId: null, description: 'work of clean-code-scan', state: 'active', depth: 1, spawnedAt: SECOND_TASK_STARTED_AT + 1000, tokens: { input: 1, output: 1, cacheRead: 0, cacheCreation: 0 }, tokenSeries: [] },
+          { agentId: 'rule-scan', parentAgentId: null, description: 'work of rule-scan', state: 'active', depth: 1, spawnedAt: SECOND_TASK_STARTED_AT + 2000, tokens: { input: 1, output: 1, cacheRead: 0, cacheCreation: 0 }, tokenSeries: [] },
         ],
       },
     ]);
