@@ -227,7 +227,30 @@ body {
   border-radius: 4px;
   background: var(--surface);
 }
+.box { flex-direction: column; }
 .main-box { padding-left: var(--dismiss-gutter); border-color: var(--line); }
+.box-meta {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+/* tabular figures keep the ticking clock from nudging the box wider every second */
+.box-time, .box-tokens {
+  color: var(--ink-3);
+  font: 500 var(--step--1)/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.box-tokens { margin-left: auto; }
+.box-time + .box-tokens { margin-left: 0; }
+.box-graph { flex: none; display: block; width: 100%; margin-top: 0.4rem; overflow: visible; }
+.box-graph .axis { stroke: var(--line-soft); stroke-width: 1; }
+.box-graph .area { fill: var(--line-soft); }
+.box-graph .line { fill: none; stroke: var(--ink-2); stroke-width: 1.5; stroke-linejoin: round; }
+.active-box .box-graph .line { stroke: var(--ink); }
 .box-text { flex: 1; min-height: 0; margin: 0; overflow-y: auto; overflow-wrap: anywhere; }
 .main-box .box-text { font-weight: 600; }
 /* heights are read while every box is back at its natural size, so one pass of reads never sees a height this code just wrote */
@@ -346,6 +369,20 @@ const RECONNECT_DELAY_MS = 3000;
 const STATUS_LABELS = { waiting: "Waiting", busy: "Busy", idle: "Idle" };
 const WAITING_STATUS = "waiting";
 const FINISHED_STATE = "finished";
+const CLOCK_TICK_MS = 1000;
+const SECOND_MS = 1000;
+const MINUTE_SECONDS = 60;
+const HOUR_SECONDS = 3600;
+const DAY_SECONDS = 86400;
+const PAD_WIDTH = 2;
+const THOUSAND = 1000;
+const MILLION = 1000000;
+const TOKEN_DECIMALS = 1;
+const GRAPH_WIDTH = 100;
+const GRAPH_HEIGHT = 26;
+const GRAPH_TOP_PAD = 2;
+const MIN_SERIES_POINTS = 2;
+const SVG_NS = "http://www.w3.org/2000/svg";
 const MAIN_BOX_PARENT = null;
 const MEASURING_CLASS = "measuring";
 const ACTIVE_BOX_CLASS = "active-box";
@@ -435,15 +472,119 @@ function buildDismissButton(task, sessionId) {
   return button;
 }
 
-function buildBox(className, text) {
+function formatDuration(milliseconds) {
+  const total = Math.max(0, Math.round(milliseconds / SECOND_MS));
+  const seconds = total % MINUTE_SECONDS;
+  const minutes = Math.floor(total / MINUTE_SECONDS) % MINUTE_SECONDS;
+  const hours = Math.floor(total / HOUR_SECONDS) % 24;
+  const days = Math.floor(total / DAY_SECONDS);
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${String(minutes).padStart(PAD_WIDTH, "0")}m`;
+  if (minutes > 0) return `${minutes}m ${String(seconds).padStart(PAD_WIDTH, "0")}s`;
+  return `${seconds}s`;
+}
+
+function refreshClock(clock) {
+  const startedAt = Number(clock.dataset.startedAt);
+  const endedAt = clock.dataset.endedAt === undefined ? Date.now() : Number(clock.dataset.endedAt);
+  clock.textContent = formatDuration(endedAt - startedAt);
+}
+
+// a running clock carries no end stamp, so the tick finds it by the absence of that attribute
+function buildClock(startedAt, endedAt) {
+  if (!Number.isFinite(startedAt)) return null;
+  const clock = el("span", "box-time");
+  clock.dataset.startedAt = String(startedAt);
+  if (Number.isFinite(endedAt)) clock.dataset.endedAt = String(endedAt);
+  refreshClock(clock);
+  return clock;
+}
+
+function tickClocks() {
+  for (const clock of sessionList.querySelectorAll(".box-time:not([data-ended-at])")) refreshClock(clock);
+}
+
+function formatTokens(total) {
+  if (total >= MILLION) return `${(total / MILLION).toFixed(TOKEN_DECIMALS)}M`;
+  if (total >= THOUSAND) return `${(total / THOUSAND).toFixed(TOKEN_DECIMALS)}k`;
+  return String(total);
+}
+
+// the headline is every token the work consumed; the hover carries the split, because cache reads
+// dwarf the rest and would otherwise read as output
+function buildTokens(tokens) {
+  if (!tokens) return null;
+  const total = tokens.input + tokens.output + tokens.cacheRead + tokens.cacheCreation;
+  if (total === 0) return null;
+  const label = el("span", "box-tokens", `${formatTokens(total)} tok`);
+  label.title = [
+    `${tokens.input.toLocaleString()} in`,
+    `${tokens.output.toLocaleString()} out`,
+    `${tokens.cacheRead.toLocaleString()} cache read`,
+    `${tokens.cacheCreation.toLocaleString()} cache write`,
+  ].join(" · ");
+  return label;
+}
+
+function svg(tag, attributes) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value);
+  return node;
+}
+
+// the series is irregular in time, because a sample is only kept when the total moves, so the
+// curve is plotted against real timestamps rather than sample number
+function graphPath(series) {
+  const firstAt = series[0][0];
+  const span = series[series.length - 1][0] - firstAt;
+  const peak = series[series.length - 1][1];
+  return series.map(([at, total], index) => {
+    const x = span === 0 ? (index / (series.length - 1)) * GRAPH_WIDTH : ((at - firstAt) / span) * GRAPH_WIDTH;
+    const y = GRAPH_HEIGHT - (peak === 0 ? 0 : (total / peak) * (GRAPH_HEIGHT - GRAPH_TOP_PAD));
+    return `${index === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join("");
+}
+
+function buildGraph(series) {
+  if (!Array.isArray(series) || series.length < MIN_SERIES_POINTS) return null;
+  const line = graphPath(series);
+  const chart = svg("svg", {
+    class: "box-graph",
+    viewBox: `0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT + 1}`,
+    height: GRAPH_HEIGHT + 1,
+    preserveAspectRatio: "none",
+    "aria-hidden": "true",
+  });
+  chart.append(
+    svg("path", { class: "area", d: `${line}L${GRAPH_WIDTH},${GRAPH_HEIGHT}L0,${GRAPH_HEIGHT}Z` }),
+    svg("path", { class: "line", d: line }),
+    svg("line", { class: "axis", x1: 0, y1: GRAPH_HEIGHT + 0.5, x2: GRAPH_WIDTH, y2: GRAPH_HEIGHT + 0.5 })
+  );
+  return chart;
+}
+
+function buildBoxMeta(clock, tokens) {
+  if (!clock && !tokens) return null;
+  const meta = el("div", "box-meta");
+  if (clock) meta.append(clock);
+  if (tokens) meta.append(tokens);
+  return meta;
+}
+
+function buildBox(className, text, meta, graph) {
   const box = el("div", className);
   box.append(el("p", "box-text", text));
+  if (meta) box.append(meta);
+  if (graph) box.append(graph);
   return box;
 }
 
 function buildMainBox(task, sessionId) {
-  if (task.main.state !== FINISHED_STATE) return buildBox(`box main-box ${ACTIVE_BOX_CLASS}`, task.title);
-  const box = buildBox("box main-box", task.title);
+  const finished = task.main.state === FINISHED_STATE;
+  const meta = buildBoxMeta(buildClock(task.startedAt, finished ? task.lastActivityAt : null), buildTokens(task.tokens));
+  const graph = buildGraph(task.tokenSeries);
+  if (!finished) return buildBox(`box main-box ${ACTIVE_BOX_CLASS}`, task.title, meta, graph);
+  const box = buildBox("box main-box", task.title, meta, graph);
   box.prepend(buildDismissButton(task, sessionId));
   return box;
 }
@@ -466,7 +607,8 @@ function buildHelperList(helpers, byParent) {
 
 function buildHelper(helper, byParent) {
   const item = el("li", "helper");
-  item.append(buildBox(`box helper-box ${ACTIVE_BOX_CLASS}`, helper.description));
+  const meta = buildBoxMeta(buildClock(helper.spawnedAt, null), buildTokens(helper.tokens));
+  item.append(buildBox(`box helper-box ${ACTIVE_BOX_CLASS}`, helper.description, meta, buildGraph(helper.tokenSeries)));
   const children = byParent.get(helper.agentId);
   if (children) item.append(buildHelperList(children, byParent));
   return item;
@@ -735,6 +877,7 @@ projectSelect.addEventListener("change", () => {
 });
 
 window.addEventListener("resize", remeasureOnResize);
+setInterval(tickClocks, CLOCK_TICK_MS);
 
 render();
 

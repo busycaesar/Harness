@@ -4,6 +4,7 @@ const { claudeHome } = require('./lib/claude-paths');
 const { createSnapshotBuilder } = require('./lib/snapshot');
 const { createDashboardServer, LOOPBACK_HOST } = require('./lib/dashboard-server');
 const { createGoalResolver } = require('./lib/session-goal');
+const { createTokenHistory } = require('./lib/token-history');
 
 const DEFAULT_PORT = 4747;
 const MAX_PORT = 65535;
@@ -21,9 +22,10 @@ function parsePort(argv) {
 async function main() {
   const port = parsePort(process.argv.slice(2));
   const { resolveGoal, resolveTitle } = createGoalResolver();
+  const tokenHistory = createTokenHistory();
   const dashboard = createDashboardServer({
     publicDir: path.join(__dirname, 'public'),
-    buildSnapshot: createSnapshotBuilder({ claudeDir: claudeHome(), resolveGoal, resolveTitle }),
+    buildSnapshot: createSnapshotBuilder({ claudeDir: claudeHome(), resolveGoal, resolveTitle, tokenHistory }),
     onError: (error) => console.error(`monitor: ${error.message}`),
   });
   const listeningPort = await dashboard.start(port);

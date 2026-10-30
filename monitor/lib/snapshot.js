@@ -80,33 +80,67 @@ function titleOf(mainAgent, task, resolveTitle) {
 }
 
 // a helper whose spawner belongs to an earlier task hangs off the main box, so a task stays self-contained
-function placeHelper(agent, parentOf, depthByAgentId) {
+function placeHelper(agent, parentOf, depthByAgentId, sampleSeries) {
   const spawnerAgentId = parentOf.get(agent.agentId);
   const parentAgentId = depthByAgentId.has(spawnerAgentId) ? spawnerAgentId : null;
   const depth = parentAgentId === null ? FIRST_HELPER_DEPTH : depthByAgentId.get(parentAgentId) + 1;
   depthByAgentId.set(agent.agentId, depth);
-  return { agentId: agent.agentId, parentAgentId, description: agent.description, state: agent.state, depth };
-}
-
-function helpersOf(task, parentOf) {
-  const depthByAgentId = new Map();
-  return task.agents
-    .filter((agent) => agent.agentId !== task.main.agentId)
-    .map((agent) => placeHelper(agent, parentOf, depthByAgentId));
-}
-
-function describeTask(task, parentOf, resolveTitle) {
-  const mainAgent = task.agents.find((agent) => agent.agentId === task.main.agentId) || null;
   return {
-    taskId: task.taskId,
-    startedAt: task.startedAt,
-    ...titleOf(mainAgent, task, resolveTitle),
-    main: { ...task.main, state: taskStateOf(task) },
-    agents: helpersOf(task, parentOf),
+    agentId: agent.agentId,
+    parentAgentId,
+    description: agent.description,
+    state: agent.state,
+    depth,
+    spawnedAt: agent.spawnedAt,
+    tokens: agent.tokens,
+    tokenSeries: sampleSeries(agent.agentId, agent.tokens, agent.state === ACTIVE_STATE),
   };
 }
 
-function describeTasks(agents, promptAts, resolveTitle, sessionTurn) {
+function helpersOf(task, parentOf, sampleSeries) {
+  const depthByAgentId = new Map();
+  return task.agents
+    .filter((agent) => agent.agentId !== task.main.agentId)
+    .map((agent) => placeHelper(agent, parentOf, depthByAgentId, sampleSeries));
+}
+
+const NO_TOKENS = { input: 0, output: 0, cacheRead: 0, cacheCreation: 0 };
+
+function addTokens(total, tokens) {
+  return {
+    input: total.input + tokens.input,
+    output: total.output + tokens.output,
+    cacheRead: total.cacheRead + tokens.cacheRead,
+    cacheCreation: total.cacheCreation + tokens.cacheCreation,
+  };
+}
+
+// a task's cost is everything its agents spent, the one it was delegated to included
+function tokensOf(task) {
+  return task.agents.reduce((total, agent) => addTokens(total, agent.tokens), NO_TOKENS);
+}
+
+function lastActivityOf(task) {
+  const times = task.agents.map((agent) => agent.lastActivityAt).filter((time) => time !== null);
+  return times.length === 0 ? null : Math.max(...times);
+}
+
+function describeTask(task, parentOf, resolveTitle, sampleSeries) {
+  const mainAgent = task.agents.find((agent) => agent.agentId === task.main.agentId) || null;
+  const tokens = tokensOf(task);
+  return {
+    taskId: task.taskId,
+    startedAt: task.startedAt,
+    lastActivityAt: lastActivityOf(task),
+    tokens,
+    tokenSeries: sampleSeries(task.taskId, tokens, true),
+    ...titleOf(mainAgent, task, resolveTitle),
+    main: { ...task.main, state: taskStateOf(task) },
+    agents: helpersOf(task, parentOf, sampleSeries),
+  };
+}
+
+function describeTasks(agents, promptAts, resolveTitle, sessionTurn, sampleSeries) {
   const parentOf = buildAgentTree(agents, spawnerSetsOf(agents));
   const agentById = new Map(agents.map((agent) => [agent.agentId, agent]));
   const grouped = groupIntoTasks(agents, promptAts, parentOf);
@@ -116,7 +150,7 @@ function describeTasks(agents, promptAts, resolveTitle, sessionTurn) {
     main: mainBoxOf(task, parentOf),
     agents: task.agentIds.map((agentId) => agentById.get(agentId)),
     isWorkedOnBySession: isWorkedOnBySession(task.startedAt, sessionTurn),
-  }, parentOf, resolveTitle));
+  }, parentOf, resolveTitle, sampleSeries));
 }
 
 function describeSession(record, status, repoRoot, transcriptState, agents, goal, tasks) {
@@ -179,10 +213,22 @@ function createSnapshotBuilder({
   nowMs = Date.now,
   resolveGoal = () => null,
   resolveTitle = () => null,
+  tokenHistory = null,
 }) {
   const transcriptReader = createTranscriptReader();
   const readSubagents = createSubagentReader({ transcriptReader });
   const repoRootOf = createRepoRootResolver();
+
+  // a finished helper is never drawn, so it is not worth a series; a main box is kept for the life
+  // of the session and keeps its curve even after its task is done
+  function seriesSamplerFor(sessionId) {
+    if (tokenHistory === null) return () => [];
+    return function sampleSeries(boxId, tokens, wanted) {
+      if (!wanted) return [];
+      const total = tokens.input + tokens.output + tokens.cacheRead + tokens.cacheCreation;
+      return tokenHistory.sample(`${sessionId}:${boxId}`, total, nowMs());
+    };
+  }
 
   function describeLiveSession(record) {
     const transcript = transcriptReader.read(transcriptPath(claudeDir, record.cwd, record.sessionId));
@@ -190,7 +236,8 @@ function createSnapshotBuilder({
     const agents = readSubagents(subagentsDirectory(claudeDir, record.cwd, record.sessionId), transcriptState);
     const goal = resolveGoal(record.sessionId, agents);
     const status = sessionStatusOf(record, transcript, agents);
-    const tasks = describeTasks(agents, transcriptState.promptAts, resolveTitle, sessionTurnOf(status, transcriptState));
+    const sampleSeries = seriesSamplerFor(record.sessionId);
+    const tasks = describeTasks(agents, transcriptState.promptAts, resolveTitle, sessionTurnOf(status, transcriptState), sampleSeries);
     return describeSession(record, status, repoRootOf(record.cwd), transcriptState, agents, goal, tasks);
   }
 
@@ -198,6 +245,7 @@ function createSnapshotBuilder({
     transcriptReader.startSweep();
     const sessions = readLiveSessions(claudeDir, isAlive).map(describeLiveSession).sort(compareSessions);
     transcriptReader.finishSweep();
+    if (tokenHistory !== null) tokenHistory.forgetUnseen();
     return { generatedAt: nowMs(), projects: summarizeProjects(sessions, repoRootOf), sessions };
   };
 }
