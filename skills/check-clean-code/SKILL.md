@@ -71,7 +71,7 @@ Write the report, even when there are no findings:
 ```markdown
 # Clean code report
 
-Scope: <scope, with the paths or base branch if any> · Date: <YYYY-MM-DD>
+Scope: <scope, with the paths or base branch if any> · HEAD: <short SHA>[ + uncommitted] · Date: <YYYY-MM-DD>
 
 ## Summary
 
@@ -88,6 +88,7 @@ Files checked: <n>
 - [<path>:<line>](<link>#L<line>) · **<principle>** (<rule file>): <what is wrong>. Fix: <suggested fix>.
 ```
 
+- The header records what code the report was made against, so a reader can tell when it no longer matches: `HEAD` is the short SHA of the commit checked out; add `+ uncommitted` when the checked code included uncommitted changes. For `branch`, the base branch is followed by `@ <short merge-base SHA>`. Outside a git repository, leave out `HEAD`.
 - The summary has one row per rule file read in Step 1, including those with no findings: a rules-folder file by its name without `.md`, a project rule file by its path under the project rules folder without `.md` (e.g. `conventions/naming`).
 - One `###` section per file with findings, in path order; findings in line order.
 - `<path>` is relative to the project root. `<link>` is the same file relative to the report's folder, so the link opens from a Markdown preview.
