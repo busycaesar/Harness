@@ -18,12 +18,12 @@ function listAgentIds(directory) {
   }
 }
 
-// an agent that never reaches a terminal stop reason leaves no trace of its death, so the session
-// is asked instead: a turn it ended after the agent fell silent, carrying no pending agents, buries it
+// an agent that never reaches a terminal stop reason leaves no trace of its death, so the session is
+// asked instead: once it ends a turn with no agents pending, every agent that fell silent before that
+// turn is buried, and an unrelated agent spawned later must not revive them
 function sessionOutlivedAgent(sessionState, lastActivityAt) {
-  if (sessionState.pendingBackgroundAgents !== 0) return false;
-  if (sessionState.pendingBackgroundAgentsAt === null || lastActivityAt === null) return false;
-  return sessionState.pendingBackgroundAgentsAt > lastActivityAt;
+  if (sessionState.lastZeroPendingAgentsAt === null || lastActivityAt === null) return false;
+  return sessionState.lastZeroPendingAgentsAt > lastActivityAt;
 }
 
 function agentState(transcript, sessionState) {

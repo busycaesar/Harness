@@ -15,7 +15,7 @@ function emptyState() {
     gitBranch: null,
     effort: null,
     pendingBackgroundAgents: null,
-    pendingBackgroundAgentsAt: null,
+    lastZeroPendingAgentsAt: null,
     lastTurnDurationMs: null,
     lastToolUse: null,
     lastPromptAt: null,
@@ -108,7 +108,9 @@ function applyTurnDurationLine(state, record) {
   const reported = Number.isFinite(record.pendingBackgroundAgentCount) ? record.pendingBackgroundAgentCount : null;
   if (reported === null && state.pendingBackgroundAgents === null) return;
   state.pendingBackgroundAgents = reported === null ? 0 : reported;
-  state.pendingBackgroundAgentsAt = parseTimestamp(record.timestamp);
+  if (state.pendingBackgroundAgents !== 0) return;
+  const zeroAt = parseTimestamp(record.timestamp);
+  if (zeroAt !== null) state.lastZeroPendingAgentsAt = zeroAt;
 }
 
 function applySharedFields(state, record) {
