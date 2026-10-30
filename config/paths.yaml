@@ -10,6 +10,9 @@ onboard: project-map.html
 # The local-run runbook: one self-contained HTML file.
 runbook: runbook.html
 
+# The interactive pipeline overview: one self-contained HTML file.
+overview: pipeline-map.html
+
 # The clean-code report: one Markdown file, replaced on each run.
 clean-code: clean-code-report.md
 
