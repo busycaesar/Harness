@@ -8,7 +8,7 @@
   :root {
     --bg: #faf9f7; --grid: #e6e5df; --surface: #ffffff; --sunk: #f2f2ee;
     --text: #17171a; --muted: #63635d; --faint: #95958d; --line: #e2e1db; --edge: #a8a79f;
-    --out: #2563eb; --in: #d97706; --match: #dc2626;
+    --out: #2563eb; --in: #d97706; --match: #dc2626; --mark: #0891b2;
     --ok: #2d7a4b; --warn: #94620d; --warn-soft: #fbf2e1; --bad: #ad2f2c; --bad-soft: #fdeceb;
     --cat-1: #4e79a7; --cat-2: #f28e2b; --cat-3: #59a14f; --cat-4: #e15759;
     --cat-5: #76b7b2; --cat-6: #edc948; --cat-7: #b07aa1; --cat-8: #ff9da7;
@@ -23,7 +23,7 @@
     :root {
       --bg: #121215; --grid: #232329; --surface: #1c1c21; --sunk: #26262c;
       --text: #ecebe6; --muted: #a4a49c; --faint: #76766e; --line: #33333c; --edge: #6a6a74;
-      --out: #60a5fa; --in: #fbbf24; --match: #f87171;
+      --out: #60a5fa; --in: #fbbf24; --match: #f87171; --mark: #22d3ee;
       --ok: #84c79a; --warn: #e0b263; --warn-soft: #322714; --bad: #f0908c; --bad-soft: #371f20;
       --shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
       --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.6);
@@ -110,6 +110,8 @@
   <button id="fit">Fit</button>
   <button id="collapse">Collapse all</button>
   <button id="expand">Expand all</button>
+  <button id="copymarks">Copy marks</button>
+  <button id="marks">No marks</button>
   <button id="reset">Reset layout</button>
 </header>
 <div id="graph"></div>
@@ -142,6 +144,8 @@
   var COLUMN_GAP = 200;
   var BOX_GAP = 50;
   var HEADER_H = 60;
+  // Bands instead of columns: tiers run down the map and their contents spread across it.
+  var VERTICAL = data.orientation === 'vertical';
   var FONT = '12px ' + SANS;
 
   var files = (data.files || []).slice().sort();
@@ -363,6 +367,7 @@
       { selector: 'node', style: { 'label': 'data(label)', 'color': color('--text'), 'font-size': 12, 'font-family': SANS, 'min-zoomed-font-size': 5 } },
       { selector: 'node[kind = "file"]', style: { 'shape': 'ellipse', 'width': DOT, 'height': DOT, 'background-color': 'data(color)', 'border-width': 0, 'text-valign': 'bottom', 'text-halign': 'center', 'text-margin-y': 4, 'font-size': 11 } },
       { selector: 'node.entry', style: { 'width': DOT + 4, 'height': DOT + 4, 'border-width': 3, 'border-color': color('--text'), 'font-weight': 'bold' } },
+      { selector: 'node.marked', style: { 'width': DOT + 5, 'height': DOT + 5, 'border-width': 4, 'border-color': color('--mark'), 'border-style': 'double', 'font-weight': 'bold' } },
       { selector: 'node[kind = "folder"]', style: { 'shape': 'round-rectangle', 'background-color': 'data(color)', 'background-opacity': 0.06, 'border-color': 'data(color)', 'border-width': 1.5, 'border-opacity': 0.7, 'padding': PAD, 'text-valign': 'top', 'text-halign': 'center', 'font-size': 13, 'font-weight': 'bold', 'text-margin-y': -5, 'color': 'data(color)' } },
       { selector: 'node.collapsed', style: { 'padding': 0, 'width': 'data(w)', 'height': COLLAPSED_H, 'background-opacity': 0.4, 'border-width': 2, 'text-valign': 'center', 'text-margin-y': 0, 'color': color('--text') } },
       { selector: 'node.section', style: { 'padding': 0, 'width': 'data(w)', 'height': 'data(h)', 'background-opacity': 0.14, 'border-width': 2, 'text-valign': 'center', 'text-margin-y': 0, 'color': color('--text'), 'font-size': 14, 'text-wrap': 'wrap', 'text-max-width': 'data(tw)' } },
@@ -423,6 +428,32 @@
   var persist = function () {
     try { localStorage.setItem(storeKey, JSON.stringify(saved)); } catch (e) { }
   };
+
+  // Marks belong to the reader, not the data. They are kept per map in this browser under
+  // their own key, with no layout hash in it, so moving boxes or resetting the layout keeps
+  // them; only a change to the map's data retires them.
+  var markKey = null;
+  var marks = new Set();
+  var loadMarks = function () {
+    markKey = 'project-map-marks:' + (data.project || '') + ':' + hashOf(document.getElementById('data').textContent);
+    try { marks = new Set(JSON.parse(localStorage.getItem(markKey) || '[]')); } catch (e) { marks = new Set(); }
+  };
+  var applyMarks = function () {
+    cy.nodes('[kind = "file"]').forEach(function (n) {
+      if (marks.has(n.data('path'))) n.addClass('marked');
+      else n.removeClass('marked');
+    });
+    var button = document.getElementById('marks');
+    button.textContent = marks.size ? 'Clear ' + marks.size + ' mark' + (marks.size === 1 ? '' : 's') : 'No marks';
+    button.disabled = marks.size === 0;
+    document.getElementById('copymarks').disabled = marks.size === 0;
+  };
+  var toggleMark = function (path) {
+    if (marks.has(path)) marks.delete(path);
+    else marks.add(path);
+    try { localStorage.setItem(markKey, JSON.stringify(Array.from(marks))); } catch (e) { }
+    applyMarks();
+  };
   var leaves = function () {
     return cy.nodes().filter(function (n) { return n.data('kind') === 'file' || n.hasClass('collapsed'); });
   };
@@ -461,7 +492,7 @@
     var area = 0;
     var widest = 0;
     items.forEach(function (it) { area += (it.w + GAP) * (it.h + GAP); widest = Math.max(widest, it.w); });
-    var rowLimit = Math.max(widest, Math.sqrt(area) * 1.6);
+    var rowLimit = VERTICAL ? Infinity : Math.max(widest, Math.sqrt(area) * 1.6);
 
     var x = 0, y = 0, rowH = 0, w = 0;
     items.forEach(function (it) {
@@ -497,7 +528,20 @@
   // Lay out the tiers left to right. Inside a tier, unit boxes fill rows in their related
   // order until the block is roughly rectangular; every other row runs right to left, so
   // each box stays next to the one before it.
-  var layoutColumns = function () {
+  var measureUnit = function (d) {
+    if (isSection(d)) { var sz = sectionSize(d); return { d: d, leaf: true, w: sz.w, h: sz.h }; }
+    if (collapsed.has(d)) return { d: d, leaf: true, w: textWidth(collapsedLabel(d)) + 28, h: COLLAPSED_H };
+    var inner = pack(d);
+    return { d: d, inner: inner, w: Math.max(inner.w + 2 * PAD, textWidth(unitLabel(d)) + 16), h: inner.h + 2 * PAD + LABEL_H };
+  };
+
+  var rowWidth = function (row) {
+    var w = -BOX_GAP;
+    row.forEach(function (b) { w += b.w + BOX_GAP; });
+    return w;
+  };
+
+  var layoutHorizontal = function () {
     var x = 0;
     columns.forEach(function (col, i) {
       var boxes = col.units.map(function (d) {
@@ -545,6 +589,36 @@
       if (col.name) placeAt('t:' + i, x + blockW / 2, HEADER_H / 3);
       x += blockW + COLUMN_GAP;
     });
+  };
+
+  // Lay out the tiers top to bottom instead, each tier a band running across the map with
+  // its name in a gutter on the left. A band is one row, so the flow reads left to right.
+  var layoutVertical = function () {
+    var gutter = 0;
+    columns.forEach(function (col) { if (col.name) gutter = Math.max(gutter, textWidth(col.name) + 48); });
+
+    var y = HEADER_H;
+    columns.forEach(function (col, i) {
+      var row = col.units.map(measureUnit);
+      var bandTop = y;
+      var bx = gutter;
+      var rowH = 0;
+      row.forEach(function (b) {
+        if (b.leaf) placeAt('d:' + b.d, bx + b.w / 2, y + b.h / 2, b.w);
+        else place(b.inner, bx + PAD, y + LABEL_H + PAD);
+        bx += b.w + BOX_GAP;
+        rowH = Math.max(rowH, b.h);
+      });
+      y += rowH;
+      if (col.name) placeAt('t:' + i, gutter / 2, (bandTop + y) / 2);
+      y += COLUMN_GAP;
+    });
+  };
+
+  // Columns unless the data asks for bands.
+  var layoutColumns = function () {
+    if (VERTICAL) return layoutVertical();
+    return layoutHorizontal();
   };
 
   var fit = function () {
@@ -609,6 +683,8 @@
         n.position({ x: sx / inside.length, y: sy / inside.length });
       });
     });
+    if (markKey === null) loadMarks();
+    applyMarks();
     clearFocus();
     fit();
   };
@@ -628,11 +704,9 @@
     return '<li><span class="swatch" style="background:' + unitColor[un.path] + '"></span>' + escapeHtml(unitLabel(un.path)) + '</li>';
   }).join('');
   var showHelp = function () {
-    panel.innerHTML = '<p class="hint">Hover or click a file to see what it imports and what imports it.</p>' +
-      '<p class="hint">Ringed dots are entry points, where the program starts. Arrows point from a file to the files that import it. Drag to pan, scroll to zoom. Right-drag across empty space to select several boxes; right-drag a file, folder or selection to move it. Click a folder to collapse or expand it.</p>' +
-      '<h3>Legend</h3><ul class="legend">' +
-      '<li><span class="swatch" style="background:var(--out)"></span>Imports</li>' +
-      '<li><span class="swatch" style="background:var(--in)"></span>Imported by</li>' + legend + '</ul>';
+    panel.innerHTML = '<p class="hint">Hover or click a file to see what it imports (blue) and what imports it (orange).</p>' +
+      '<p class="hint">Ringed dots are entry points, where the program starts. Arrows point from a file to the files that import it. Shift-click a dot to mark it, and again to clear it. Right-drag to pan, scroll to zoom. Drag across empty space to select several boxes; drag a file, folder or selection to move it. Click a folder to collapse or expand it.</p>' +
+      '<h3>Folders</h3><ul class="legend">' + legend + '</ul>';
   };
 
   var selected = null;
@@ -673,7 +747,14 @@
 
   cy.on('mouseover', 'node[kind = "file"]', function (ev) { if (!selected) mark(ev.target); });
   cy.on('mouseout', 'node[kind = "file"]', function () { if (!selected) cy.edges().removeClass('uses usedby'); });
-  cy.on('tap', 'node[kind = "file"]', function (ev) { focusFile(ev.target.data('path')); });
+  cy.on('tap', 'node[kind = "file"]', function (ev) {
+    var native = ev.originalEvent;
+    if (native && (native.shiftKey || native.altKey)) {
+      toggleMark(ev.target.data('path'));
+      return;
+    }
+    focusFile(ev.target.data('path'));
+  });
   cy.on('tap', 'node[kind = "folder"]', function (ev) {
     var p = ev.target.data('path');
     if (isSection(p)) {
@@ -699,8 +780,9 @@
   document.addEventListener('keydown', function (ev) {
     if (ev.key === 'Escape') clearFocus();
   });
-  // Left button: drag anywhere to pan, with a hand cursor; a click still opens a file or folder.
-  // Right button: drag across empty space to select an area; drag a box or the selection to move it.
+  // Right button: drag anywhere to pan, with a hand cursor.
+  // Left button: drag across empty space to select an area; drag a box or the selection to move it;
+  // a click without a drag still opens a file or folder.
   var container = cy.container();
   var selection = document.getElementById('selection');
   var drag = null;
@@ -724,13 +806,14 @@
 
   container.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
   container.addEventListener('mousedown', function (ev) {
-    if (ev.button === 0 || ev.button === 1) {
+    if (ev.button === 1 || ev.button === 2) {
+      ev.preventDefault();
       drag = { mode: 'pan', x: ev.clientX, y: ev.clientY };
       container.classList.add('panning');
       return;
     }
-    if (ev.button !== 2) return;
-    ev.preventDefault();
+    if (ev.button !== 0) return;
+    // left mousedown is left undefaulted so Cytoscape still reports the tap that opens a file or folder
     var node = nodeAt(ev);
     if (node) {
       if (!node.selected()) {
@@ -821,6 +904,25 @@
   document.getElementById('expand').addEventListener('click', function () {
     collapsed = new Set();
     render();
+  });
+  // Marks are only useful outside the map if they can be taken out of it.
+  document.getElementById('copymarks').addEventListener('click', function () {
+    var button = document.getElementById('copymarks');
+    var text = Array.from(marks).sort().join('\n');
+    var done = function () {
+      button.textContent = 'Copied';
+      setTimeout(function () { button.textContent = 'Copy marks'; }, 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { window.prompt('Marked dots', text); });
+      return;
+    }
+    window.prompt('Marked dots', text);
+  });
+  document.getElementById('marks').addEventListener('click', function () {
+    marks = new Set();
+    try { localStorage.removeItem(markKey); } catch (e) { }
+    applyMarks();
   });
   document.getElementById('reset').addEventListener('click', function () {
     saved = {};
