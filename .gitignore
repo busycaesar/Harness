@@ -134,3 +134,6 @@ dist
 
 # monitor session-goal cache (runtime state)
 monitor/.session-goals.json
+
+# model routing log, written per session on this machine (runtime state)
+.claude/findings/
