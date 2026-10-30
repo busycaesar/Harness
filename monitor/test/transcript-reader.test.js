@@ -230,7 +230,7 @@ test('pending background agents fall back to none when a later turn omits the co
     appendToTranscript(file, [turnDurationLine('2026-01-01T00:02:00.000Z')]);
     const { state } = reader.read(file);
     assert.equal(state.pendingBackgroundAgents, 0);
-    assert.equal(state.pendingBackgroundAgentsAt, Date.parse('2026-01-01T00:02:00.000Z'));
+    assert.equal(state.lastZeroPendingAgentsAt, Date.parse('2026-01-01T00:02:00.000Z'));
   });
 });
 
