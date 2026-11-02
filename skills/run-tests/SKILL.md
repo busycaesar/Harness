@@ -31,7 +31,7 @@ For each section with changed files and a test command:
 - **Method `naming`**: the tests are the changed test files plus the existing test files its patterns give for the changed source files. Run them with the `file` command. Without a `file` command, skip this selection and run the `all` command.
 - **No method**: run the `all` command.
 
-If a method selects no test, run nothing for that section.
+If a method selects no test, run nothing for that section. A run that finds no test is not a failure: report no test run for that section.
 
 ## Step 4: Report
 

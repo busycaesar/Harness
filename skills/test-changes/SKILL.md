@@ -37,9 +37,9 @@ Used by Steps 2 and 4, for the failing tests they hand over.
 2. **Already failing.** Leave them alone.
 3. **Changed by this change, with `no-fix`: report.** Change nothing; for each, record the test, its failure output and its likely cause in the changed code, and skip 4 and 5.
 4. **Changed by this change, otherwise: fix.** Each must pass. Before the first round, copy every uncommitted file into a new temporary folder (see `.claude/rules/harness/temp-and-git.md`). Then, at most 3 rounds:
-   - invoke `implement-requirements` with the tests as requirements: each "test `<name>` at `path:line` passes; change the code, never the test", with its output, plus the work item folder;
+   - invoke `implement-requirements` with the tests as requirements: each "test `<name>` at `path:line` passes; change the code, never the test", with its output, plus the work item folder; if it changed no file, end the rounds;
    - invoke `run-tests`. Tests still failing go to the next round; new failures go through 1 and 2 first.
-5. **Undo.** If 3 rounds did not fix them, undo the rounds: restore each file they changed from the copy, or, for a file not in it, from `HEAD` with read-only `git show`; delete each file they created. Then report each test, each round and why it failed. Remove the copy when done.
+5. **Undo.** If the rounds ended with any of them still failing, undo the rounds: restore each file they changed from the copy, or, for a file not in it, from `HEAD` with read-only `git show`; delete each file they created. Then report each test, each round and why it failed. Remove the copy when done.
 
 ## Step 4: Coverage
 
@@ -54,7 +54,7 @@ Used by Steps 2 and 4, for the failing tests they hand over.
 
 ## Step 5: Report
 
-Before reporting, confirm every temporary copy is removed and git state is unchanged.
+Before reporting, confirm every temporary copy is removed, git state is unchanged, and every pass, failure and coverage figure comes from the last `run-tests` or `check-coverage` run after the last file change, never from a skill's own claim of success.
 
 Print only:
 

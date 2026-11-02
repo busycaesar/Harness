@@ -29,25 +29,26 @@ Do what the plan says and nothing else:
 
 1. **Delete** each test it marks delete; delete its file only when nothing else is left in it.
 2. **Change** each test it marks change, so it asserts the result the plan gives.
-3. **Write** each case, in its file, through the unit it names, asserting the result it names. Place, name and write it as `conventions/tests.md` says, else as the existing tests in that file or folder are.
+3. **Write** each case, in its file, through the unit it names, asserting the exact result it names: never only that a result exists or is truthy, never an expected value computed by the unit under test, and no placeholder or empty body. Place, name and write it as `conventions/tests.md` says, else as the existing tests in that file or folder are.
 
 Never weaken a test (see `.claude/rules/harness/proofs.md`).
 
 ## Step 4: Check the tests are well-formed
 
-Do not run the tests: the code they test may not exist yet. For each test file changed or created, check it with its section's `typecheck`, else `build`, else `lint` command when one is recorded, else by reading it against the project's existing tests.
+Do not run the tests: the code they test may not exist yet. For each test file changed or created, check it with its section's `typecheck`, else `build`, else `lint` command when one is recorded, else by reading it against the project's existing tests. When the command cannot run, report the file unchecked, never well-formed.
 
 - An error in the test's own setup (syntax, a test helper or fixture, its own imports) is fixed in the test, without loosening it.
 - An error that comes only from code the plan names but that does not exist yet is expected: leave it and report it.
 
 ## Step 5: Report
 
-Before reporting, confirm no test was weakened and only test files changed.
+Before reporting, re-read each test written or changed against its case: it goes through the unit named and asserts the result named, nothing was weakened, and only test files changed.
 
 Print only:
 
 - the plan's path;
 - each test deleted and changed, with its file;
-- the test files created or changed, and the cases in each;
+- each case written, by its plan ID, with its test name and file;
+- the test files left unchecked, and why;
 - the errors left because the planned code does not exist yet;
 - each case not carried out, and why.

@@ -14,6 +14,8 @@ Changes no project file. `git archive` is read-only git.
 
 Follow the never-assume rule in `.claude/rules/harness/never-assume.md`. Ask the user only where a step says to, with `AskUserQuestion`.
 
+Sort only by the steps below: never by reading the code or the diff, or by guessing from a failure message.
+
 ## Step 1: Input
 
 Take from `$ARGUMENTS`, in any order:
@@ -28,13 +30,13 @@ Read the `project-commands` file (see `.claude/rules/harness/config.md`). Take e
 1. **New test.** A test that does not exist in the original code was added by the change: it is changed by this change.
 2. **Copy.** Once for all other failures, build a copy of the original code:
    - make a new temporary folder (see `.claude/rules/harness/temp-and-git.md`);
-   - extract `git archive HEAD` into it, then apply the starting diff, if given, with `git apply` inside the copy;
+   - extract `git archive HEAD` into it, then apply the starting diff, if given, with `git apply` inside the copy; if it does not apply, remove the copy, say so and stop;
    - link into it, from the project, the installed dependency folders and local config files (such as git-ignored env files) the tests need; never reinstall, and never link build output or caches.
 3. **Run.** Run each failing test in the copy with its section's narrowest test command (see `.claude/rules/harness/project-sections.md`), from that `cwd` inside the copy.
 4. **Sort.**
-   - Fails there too: already failing.
+   - Fails there too: already failing. It counts only if the output shows the test itself ran and failed.
    - Passes there: changed by this change.
-   - Cannot run in the copy: ask the user whether the failure is new. Yes: changed by this change. No: already failing.
+   - Cannot run in the copy (no test command for its section, or the output shows an error before the test ran, such as a missing module or a load error): ask the user whether the failure is new. Yes: changed by this change. No: already failing.
 5. **Clean up.** Remove the copy. Removing it deletes the links, never what they point to.
 
 ## Step 3: Report

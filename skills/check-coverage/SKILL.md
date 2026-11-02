@@ -24,9 +24,8 @@ List the uncommitted code changes (see `.claude/rules/harness/project-files.md`)
 
 For each section with a threshold:
 
-1. Without a `coverage` command, record that coverage could not be measured.
-2. Otherwise run it from its `cwd`, and read from its result the value the threshold measures, over what it measures (the whole project, each file, given paths).
-3. Read the uncovered lines in the section's changed files from the same result.
+1. Run its `coverage` command from its `cwd`. From this run's result only, never from coverage data left by earlier runs, read the value the threshold measures, over what it measures (the whole project, each file, given paths), and the uncovered lines in the section's changed files.
+2. With no `coverage` command, or a run whose result does not give that value, record that coverage could not be measured and why.
 
 ## Step 4: Report
 
