@@ -89,6 +89,7 @@
   aside h3.uses { color: var(--out); }
   aside h3.usedby { color: var(--in); }
   .hint { color: var(--muted); }
+  .detail { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12px/1.45 var(--mono); background: var(--sunk); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
   .legend li { display: flex; align-items: center; gap: 8px; }
   .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
   @media (max-width: 760px) {
@@ -146,6 +147,7 @@
   var HEADER_H = 60;
   // Bands instead of columns: tiers run down the map and their contents spread across it.
   var VERTICAL = data.orientation === 'vertical';
+  var TIER_LABELS = data.tierLabels === true;
   var FONT = '12px ' + SANS;
 
   var files = (data.files || []).slice().sort();
@@ -347,7 +349,7 @@
       width: Math.min(1 + Math.log2(n) * 1.5, 7), n: n } });
   });
   columns.forEach(function (col, i) {
-    if (col.name) elements.push({ group: 'nodes', selectable: false, grabbable: false, data: { id: 't:' + i, label: col.name, kind: 'tier' } });
+    if (col.name && TIER_LABELS) elements.push({ group: 'nodes', selectable: false, grabbable: false, data: { id: 't:' + i, label: col.name, kind: 'tier' } });
   });
 
   document.getElementById('title').textContent = data.project || 'Project map';
@@ -595,7 +597,7 @@
   // its name in a gutter on the left. A band is one row, so the flow reads left to right.
   var layoutVertical = function () {
     var gutter = 0;
-    columns.forEach(function (col) { if (col.name) gutter = Math.max(gutter, textWidth(col.name) + 48); });
+    columns.forEach(function (col) { if (col.name && TIER_LABELS) gutter = Math.max(gutter, textWidth(col.name) + 48); });
 
     var y = HEADER_H;
     columns.forEach(function (col, i) {
@@ -700,12 +702,18 @@
     var body = paths.length ? paths.slice().sort().map(link).join('') : '<li class="hint">None</li>';
     return '<h3 class="' + cls + '">' + title + ' (' + paths.length + ')</h3><ul>' + body + '</ul>';
   };
+  var detailsOf = data.details || {};
+  var details = function (path) {
+    return (detailsOf[path] || []).map(function (item) {
+      return '<h3>' + escapeHtml(String(item.label)) + '</h3><p class="detail">' + escapeHtml(String(item.text)) + '</p>';
+    }).join('');
+  };
   var legend = units.map(function (un) {
     return '<li><span class="swatch" style="background:' + unitColor[un.path] + '"></span>' + escapeHtml(unitLabel(un.path)) + '</li>';
   }).join('');
   var showHelp = function () {
     panel.innerHTML = '<p class="hint">Hover or click a file to see what it imports (blue) and what imports it (orange).</p>' +
-      '<p class="hint">Ringed dots are entry points, where the program starts. Arrows point from a file to the files that import it. Shift-click a dot to mark it, and again to clear it. Right-drag to pan, scroll to zoom. Drag across empty space to select several boxes; drag a file, folder or selection to move it. Click a folder to collapse or expand it.</p>' +
+      '<p class="hint">Ringed dots are entry points, where the program starts. Arrows point from a file to the files that import it. Shift-click a dot to mark it, and again to clear it. Drag empty space or right-drag to pan; swipe with two fingers to pan; pinch or use the mouse wheel to zoom. Shift-drag across empty space to select several boxes; drag a file, folder or selection to move it. Click a folder to collapse or expand it.</p>' +
       '<h3>Folders</h3><ul class="legend">' + legend + '</ul>';
   };
 
@@ -735,7 +743,8 @@
     mark(node);
     var near = node.union(node.neighborhood());
     near.union(near.nodes().ancestors()).union(cy.nodes('[kind = "tier"]')).removeClass('faded');
-    panel.innerHTML = '<h2>' + escapeHtml(path) + '</h2>' + list('Imports', 'uses', importsOf[path]) + list('Imported by', 'usedby', importedBy[path]);
+    var lists = data.importLists === false ? '' : list('Imports', 'uses', importsOf[path]) + list('Imported by', 'usedby', importedBy[path]);
+    panel.innerHTML = '<h2>' + escapeHtml(path) + '</h2>' + details(path) + lists;
   };
 
   panel.addEventListener('click', function (ev) {
@@ -780,8 +789,8 @@
   document.addEventListener('keydown', function (ev) {
     if (ev.key === 'Escape') clearFocus();
   });
-  // Right button: drag anywhere to pan, with a hand cursor.
-  // Left button: drag across empty space to select an area; drag a box or the selection to move it;
+  // Right button, or left button over empty space: drag to pan, with a hand cursor.
+  // Shift with the left button over empty space selects an area; drag a box or the selection to move it;
   // a click without a drag still opens a file or folder.
   var container = cy.container();
   var selection = document.getElementById('selection');
@@ -821,9 +830,12 @@
         node.select();
       }
       drag = { mode: 'move', x: ev.clientX, y: ev.clientY, nodes: movable(cy.$('node:selected')) };
-    } else {
+    } else if (ev.shiftKey) {
       cy.elements().unselect();
       drag = { mode: 'select', x: ev.clientX, y: ev.clientY };
+    } else {
+      drag = { mode: 'pan', x: ev.clientX, y: ev.clientY };
+      container.classList.add('panning');
     }
   }, true);
   window.addEventListener('mousemove', function (ev) {
@@ -868,15 +880,44 @@
     drag = null;
   });
 
-  // The scroll wheel zooms around the cursor.
+  var zoomAround = function (level, clientX, clientY) {
+    var box = container.getBoundingClientRect();
+    level = Math.min(cy.maxZoom(), Math.max(cy.minZoom(), level));
+    cy.zoom({ level: level, renderedPosition: { x: clientX - box.left, y: clientY - box.top } });
+  };
+  // A trackpad swipe reports pixel deltas, often sideways, with wheelDeltaY three times deltaY;
+  // a mouse wheel reports whole notches. Pinch arrives as a wheel event with ctrlKey set.
+  var isSwipe = function (ev) {
+    if (ev.ctrlKey) return false;
+    if (ev.deltaX !== 0) return true;
+    if (ev.wheelDeltaY) return ev.wheelDeltaY === -3 * ev.deltaY;
+    return ev.deltaMode === 0;
+  };
+  // A trackpad swipe pans; a pinch or the mouse wheel zooms around the cursor.
   container.addEventListener('wheel', function (ev) {
     ev.preventDefault();
-    var box = container.getBoundingClientRect();
+    if (isSwipe(ev)) {
+      cy.panBy({ x: -ev.deltaX, y: -ev.deltaY });
+      return;
+    }
     var step = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY;
-    var level = cy.zoom() * Math.pow(1.002, -step);
-    level = Math.min(cy.maxZoom(), Math.max(cy.minZoom(), level));
-    cy.zoom({ level: level, renderedPosition: { x: ev.clientX - box.left, y: ev.clientY - box.top } });
+    var rate = ev.ctrlKey ? 1.01 : 1.002;
+    zoomAround(cy.zoom() * Math.pow(rate, -step), ev.clientX, ev.clientY);
   }, { passive: false });
+  // Safari reports a trackpad pinch as gesture events instead of wheel events.
+  var gestureStart = null;
+  container.addEventListener('gesturestart', function (ev) {
+    ev.preventDefault();
+    gestureStart = cy.zoom();
+  });
+  container.addEventListener('gesturechange', function (ev) {
+    ev.preventDefault();
+    if (gestureStart !== null) zoomAround(gestureStart * ev.scale, ev.clientX, ev.clientY);
+  });
+  container.addEventListener('gestureend', function (ev) {
+    ev.preventDefault();
+    gestureStart = null;
+  });
 
   var search = document.getElementById('search');
   search.addEventListener('input', function () {

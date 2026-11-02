@@ -115,7 +115,7 @@ Keep going only while splitting earns something: a section that would divide int
 
 Read the input section of the `draw-architecture-map` skill and write each data file in the format it defines, to a temporary file.
 
-`files` holds every listed file. `tiers` lists only the tiers that have a part on this map, in the table's order. `tiers` and `tierOf` describe this map alone, so a section's data file names its own parts and its own tiers, not the project's.
+`files` holds every listed file. Set `tierLabels` to `true`, so each tier column carries its name. `tiers` lists only the tiers that have a part on this map, in the table's order. `tiers` and `tierOf` describe this map alone, so a section's data file names its own parts and its own tiers, not the project's.
 
 **One map:** write that file and invoke the `draw-architecture-map` skill with it and the map path.
 

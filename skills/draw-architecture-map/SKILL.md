@@ -29,9 +29,15 @@ A JSON file in this shape:
 
 `files` holds every file to draw, whether or not it imports anything. Each pair in `imports` is `[importing file, imported file]`. `entries` names the files where the program starts. `tiers` lists the tier columns in left-to-right order; `tierOf` maps each top-level part's path to its tier, with `.` for the files at the project root.
 
+`details` is optional: it maps a file path to a list of `{ "label": "...", "text": "..." }` items, shown in that order in the side panel when the file is selected, above its imports. Text is shown as given, preserving line breaks; the map never derives it.
+
+`importLists` is optional: set to `false`, the side panel leaves out a file's Imports and Imported by lists and shows only its `details`. Arrows and hover highlighting are unchanged.
+
+`tierLabels` is optional: set to `true`, each tier's name is drawn, as a heading over its column or in a gutter left of its band. Left out, tiers are laid out the same but carry no name.
+
 Only `files` is required. Missing `imports` draws no arrows, missing `entries` rings nothing, and missing `tiers` spreads the boxes over a few unnamed columns.
 
-`orientation` chooses how the tiers are laid out. Left out, or any value but `vertical`, draws them as **columns** side by side, which suits a map whose tiers are layers of a stack. Set to `vertical`, it draws each tier as a **band** running across the map, stacked top to bottom with the tier's name in a gutter on the left, so the flow reads left to right within each band. Use it when the tiers are stages of a pipeline rather than layers.
+`orientation` chooses how the tiers are laid out. Left out, or any value but `vertical`, draws them as **columns** side by side, which suits a map whose tiers are layers of a stack. Set to `vertical`, it draws each tier as a **band** running across the map, stacked top to bottom, with the tier's name in a gutter on the left when `tierLabels` is set, so the flow reads left to right within each band. Use it when the tiers are stages of a pipeline rather than layers.
 
 ### Master input
 
@@ -98,9 +104,9 @@ Each map path written, in the order given; every warning, under the map it belon
 The map follows `.claude/rules/harness/visual-design.md`. Specific to this map:
 
 - Each top-level box is a group and takes the next palette colour; root files take `--muted`. The map adds one token of its own, `--mark`, for a dot the reader has marked.
-- **Right drag anywhere pans**, with a `grab` cursor that becomes `grabbing` while panning. Middle drag pans too.
-- **Left drag** selects an area over empty space, or moves a box or the current selection. A click without a drag still opens the file or folder under the pointer; clicking a folder collapses or expands it.
-- **The scroll wheel zooms around the cursor**, between 0.05x and 4x.
+- **Dragging empty space pans**, and so does right or middle drag anywhere, with a `grab` cursor that becomes `grabbing` while panning.
+- **Shift with left drag over empty space** selects an area. Left drag on a box moves it, or the current selection. A click without a drag still opens the file or folder under the pointer; clicking a folder collapses or expands it.
+- **A two-finger trackpad swipe pans.** A trackpad pinch (a wheel event with `ctrlKey`, or Safari's gesture events) and the mouse wheel zoom around the cursor, between 0.05x and 4x.
 - Clicking resolves to the **innermost node under the cursor**: a file before its folder, a subfolder before its parent.
 - Header controls: search, `Fit`, `Collapse all`, `Expand all`, `Reset layout`. The side panel lists what the selected file imports and what imports it.
 - **Shift-click or alt-click a dot marks it**, and again clears it. `Clear N marks` empties the set and `Copy marks` puts the marked paths on the clipboard, one per line, so a reading of the map can leave the map.
