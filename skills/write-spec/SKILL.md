@@ -44,7 +44,7 @@ Write only what is traceable. Wherever you cannot complete a requirement or a cr
 
 ## Step 4: Hunt for ambiguity
 
-Go through every requirement against this list. Each gap becomes an entry under "Open questions" (`Q#`, with the requirements it affects). This section is a working list while the spec is a draft; it must be empty before the spec can be final.
+Go through every requirement against this list. Each gap in what is built becomes an entry under "Open questions" (`Q#`, with the requirements it affects); how to build it is never a question here. This section is a working list while the spec is a draft; it must be empty before the spec can be final.
 
 - **Actors and permissions**: who can do this? Who must not?
 - **Inputs**: formats, validation rules, required vs optional, limits.
@@ -53,8 +53,9 @@ Go through every requirement against this list. Each gap becomes an entry under 
 - **Edge cases**: duplicates, concurrency, very large or zero values, missing data, retries.
 - **Failure behaviour**: what happens when a dependency, network call or validation fails?
 - **Existing behaviour**: what changes for current users and data? Is migration or backward compatibility needed?
-- **Data lifecycle**: creation, update, deletion, retention.
-- **Non-functional needs**: performance, security, accessibility, logging, only where the requirements touch them.
+- **Data lifecycle**: creation, update, deletion, retention, what makes a record unique.
+- **External dependencies**: services, import and export formats, versions relied on.
+- **Non-functional needs**: performance, scale, security, accessibility, logging, only where the requirements touch them.
 - **Vague words**: "fast", "simple", "user-friendly", "etc.", "support", "handle", "appropriate", "some", "should" (required or optional?).
 - **Undefined terms**: domain words or names that are not defined in the requirements or the codebase.
 - **Conflicts**: requirements that contradict each other or contradict a codebase fact.
@@ -65,7 +66,7 @@ Go through every requirement against this list. Each gap becomes an entry under 
 1. Ask the open questions in batches, grouped by topic, most blocking first.
    - When a question has a few discrete answers, use the `AskUserQuestion` tool (up to 4 questions per call), and offer the concrete options you found.
    - Otherwise ask in plain text as a numbered list.
-   - Say briefly why each question matters. Offering options is fine; silently picking one is not.
+   - Phrase each as a full question the user can answer without reading the spec, say briefly why it matters, and when offering options, mark the one you recommend and why. Recommending is fine; silently picking is not.
 2. If an answer is itself vague or fits none of the options, ask a follow-up before recording it. For each clear answer, add a Decision (`D#`: question, answer, affected requirements), rewrite the affected requirements and criteria so no statement it overrides remains, and remove the question from "Open questions".
 3. Re-run Step 4 on everything that changed. Answers often reveal new gaps.
 4. Repeat until "Open questions" is empty. Never finish with unanswered questions; if the user skips one, ask it again.
@@ -79,9 +80,11 @@ Before marking the spec final, confirm all of these hold:
 - [ ] "Open questions" is empty: every question was answered and recorded as a Decision.
 - [ ] Every requirement has at least one acceptance criterion, and every criterion has an observable result.
 - [ ] Every statement traces to the source requirements, a codebase fact or a decision.
-- [ ] No vague words remain, and each term is used with one meaning throughout.
+- [ ] No vague words remain, and each concept has one term and each term one meaning throughout.
 - [ ] No **how**: no tasks, files, code or technology choices beyond the traced constraints.
 - [ ] "Out of scope" lists everything discussed and excluded.
+
+Fix every item that fails; a fix that needs an answer goes back through Steps 4–5.
 
 Then show the user a short summary (the requirement list with one line each, plus the key decisions) and ask them to approve it. Treat any requested change as new requirements: apply it, re-run Steps 4–6 on it and ask again. Only after they approve, delete the empty "Open questions" section and set `Status: final`. A final spec never contains open questions.
 
