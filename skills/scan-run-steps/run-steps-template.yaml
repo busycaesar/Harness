@@ -13,6 +13,7 @@ routes:
     steps:
       # A short id other steps name in `needs`.
       - id: <id>
+        # Named for the tool the command runs and what it starts, as the reader sees it on screen; never an abstract role. No `/`.
         title: <what the step does>
         # Exactly as recorded in the project commands file.
         command: <command>
@@ -39,7 +40,7 @@ routes:
             # e.g. `no default`, or the env sample that lists it.
             note: <note>
             source: <file>:<line>
-        # `own` when it holds the terminal in the foreground (a service, or a task that prompts the user); otherwise `shared`.
+        # `own` when the command is blocking: it holds the terminal in the foreground until stopped (a service, or a task that prompts the user). `shared` when it exits, or detaches and returns the prompt.
         terminal: <shared | own>
         # Where the order, gate and check came from. A key is omitted when that part was inferred.
         sources:
@@ -54,13 +55,6 @@ routes:
             fix: <what to do>
             source: <file>:<line>
         # Where the command came from: `<file>:<line>`, `<file> <key>`, or `manual`.
-        source: <file>:<line>
-
-    # How to stop what the steps started, and how to reset state. `[]` when none is found, with an `unresolved` entry for the route.
-    teardown:
-      - command: <command>
-        # null, or what the command loses (e.g. the database volume).
-        destroys: null
         source: <file>:<line>
 
 # What the project gives no way to do.

@@ -1,6 +1,6 @@
 ---
 name: scan-run-steps
-description: Use when how a project is run for development should be found and recorded — one route per development way (e.g. local, a dev container), each with its steps in order (which commands, which come first, which can run in parallel), what each starts, the ports it claims, how to tell it is ready, the environment variables it needs, the failures the project already documents, and how to stop and reset it. Scans the recorded project commands and the repository (containers, CI, docs, env samples) and writes one YAML file with each finding and the file it came from. Reads only: it runs, starts and stops nothing.
+description: Use when how a project is run for development should be found and recorded — one route per development way (e.g. local, a dev container), each with its steps in order (which commands, which come first, which can run in parallel), what each starts, the ports it claims, how to tell it is ready, the environment variables it needs, and the failures the project already documents. Scans the recorded project commands and the repository (containers, CI, docs, env samples) and writes one YAML file with each finding and the file it came from. Reads only: it runs, starts and stops nothing.
 argument-hint: "[folder to read, default: the whole project]"
 metadata:
   model-tier: Mid
@@ -12,7 +12,7 @@ Scan the project and write how it is run for development, one route per developm
 
 Reads and records only: runs none of the commands it finds and asks the user nothing. Changes no file except the run steps file.
 
-Follow the never-assume rule in `.claude/rules/harness/never-assume.md`, with the evidence as the only source: every command comes from the recorded project commands or, for a check or teardown they lack, from a file in the repository. Where a command is real but its order, port or readiness check is inferred, or the project commands file marks it `inferred`, record it with `unverified` naming that part and what it rests on. A gap is recorded under `unresolved`.
+Follow the never-assume rule in `.claude/rules/harness/never-assume.md`, with the evidence as the only source: every command comes from the recorded project commands or, for a check they lack, from a file in the repository. Where a command is real but its order, port or readiness check is inferred, or the project commands file marks it `inferred`, record it with `unverified` naming that part and what it rests on. A gap is recorded under `unresolved`.
 
 ## Step 1: Settings
 
@@ -33,7 +33,6 @@ List the project's files (see `.claude/rules/harness/project-files.md`) and read
 - **CI workflows and setup docs**: the order steps run in. Where they disagree, prefer CI and note the disagreement: a workflow that still passes is a sequence that still works.
 - **Env samples**: the variables each step needs, and which have no default.
 - **Troubleshooting docs, comments beside a command, scripts that check a precondition and exit with a message**: the failures the project already knows about.
-- **Stop and reset commands.**
 
 For a large project, split this reading across read-only subagents (see `.claude/rules/harness/config.md`). Each returns what it found with its file and line.
 
@@ -43,17 +42,17 @@ One route per development way recorded under `dev`, named `<section>/<way>` by i
 
 The order is the product. For every step of each route, establish:
 
+- **Title.** Named for the tool its command runs and what that tool starts, in the words the reader sees on screen, never for an abstract role the step plays in the architecture. A title holds no `/`.
 - **Kind.** A command that claims no port and exits is a `task`; one that keeps running is a `service`.
 - **Starts what.** The process or container, and the port it claims.
 - **Needs what.** The steps that must already be running, and in what state. "Once the database reports healthy" is a `gate`; "after step 1" is not. Take gates from health checks and `depends_on` conditions where they are declared.
 - **How to tell it worked.** A check the reader can run: a health endpoint, a status subcommand, a port that answers. With none in the repository, omit `verify` and say so in `unverified`.
 - **Requires.** Variables without a default, credentials, files that must exist.
-- **Terminal.** `own` for a foreground service, which blocks the terminal it runs in, or for an interactive task that prompts the user; otherwise `shared`.
+- **Terminal.** `own` when the command is blocking: it stays in the foreground until stopped (a foreground service, or a task that prompts the user). `shared` when it is non-blocking: it exits, or detaches and returns the prompt. Judge this from the command itself, not from what it starts: a command that starts long-running services in the background is `shared`.
 - **Fails.** Each known failure attached to the step it breaks; one with no step is left out.
 
 Step ids are unique within a route. Two steps are parallel only when neither needs the other, directly or through a third.
 
-Each route has its own teardown, which keeps stopping and resetting apart: for each command, `destroys` says what it loses, or is null. A route with no teardown found has `teardown: []` and an `unresolved` entry.
 
 ## Step 5: Write the file
 

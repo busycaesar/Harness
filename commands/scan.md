@@ -1,5 +1,5 @@
 ---
-description: Scan a project for its own commands, for the conventions and clean-code practices it follows, for its test setup (how tests map to source files, and its coverage threshold) and for how it is run locally (steps in order, ports, readiness checks, env vars, teardown), and write them to the project's config and rules.
+description: Scan a project for its own commands, for the conventions and clean-code practices it follows, for its test setup (how tests map to source files, and its coverage threshold) and for how it is run locally (steps in order, ports, readiness checks, env vars), and write them to the project's config and rules.
 disable-model-invocation: true
 metadata:
   model-tier: Budget
