@@ -39,5 +39,5 @@ The page follows `.claude/rules/harness/visual-design.md`. Specific to it: one v
 - The runbook's path, and that it opens in any browser.
 - Per route: its name and its sequence in one line, step titles in order, parallel steps joined.
 - Per route, every port it claims.
-- Each step marked unverified, with what it rests on.
+- Each step marked unverified, with what it rests on; each `service` step with no `verify`; each route with no teardown.
 - Each thing in `unresolved`.
