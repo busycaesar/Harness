@@ -7,7 +7,7 @@ work-items: .claude/work-items/
 # The interactive project map: one self-contained HTML file.
 onboard: project-map.html
 
-# The local-run runbook: one self-contained HTML file.
+# The local-run runbook: one self-contained HTML file, drawn by draw-architecture-map.
 runbook: runbook.html
 
 # The interactive pipeline overview: one self-contained HTML file.
@@ -22,7 +22,7 @@ clean-code-rules: .claude/rules/harness/clean-code/
 # The project's own shell commands (install, run, build, test and more): one YAML file, refreshed on each scan.
 project-commands: .claude/config/project-commands.yaml
 
-# How the project is run locally (steps in order, what each starts, ports, readiness checks, env vars, teardown): one YAML file, refreshed on each scan.
+# How the project is run locally (steps in order, what each starts, ports, readiness checks, env vars): one YAML file, refreshed on each scan.
 run-steps: .claude/config/run-steps.yaml
 
 # The project's test setup (how to find the tests related to a changed file, and the coverage threshold): one YAML file, refreshed on each scan.
